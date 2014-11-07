@@ -1,0 +1,4 @@
+date: 10-02
+1. centralize ply loader
+2. rewrite OpenGL part: glut callback and main.cpp
+3. sv error to file part
