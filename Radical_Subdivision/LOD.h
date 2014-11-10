@@ -22,10 +22,9 @@ class LOD
 public:
 	LOD(void);
 	~LOD(void);
+	bool loadFromFile(const char* filename);
 
-	bool load_ase_file(const char* filename);
-	bool load_ply_file(const char* filename);
-
+	
 	void render();
 	void renderAse();
 	void renderSubdivision();
@@ -44,6 +43,10 @@ public:
 
 private:
 	bool trans2EulerPoly();
+
+	bool load_ase_file(const char* filename);
+	bool load_ply_file(const char* filename);
+
 
 private:
 	void buildAllLevels();

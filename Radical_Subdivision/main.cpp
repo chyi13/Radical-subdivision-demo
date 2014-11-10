@@ -8,7 +8,7 @@ void init()
 {
 	initGL();
 
-	if (!m_lod.load_ply_file("bun_zipper.ply"))//"bun_zipper_res2.ase"))
+	if (!m_lod.loadFromFile("ball-10.ase"))//"bun_zipper_res2.ase"))
 	{
 		printf("File not found!\n");
 		return;

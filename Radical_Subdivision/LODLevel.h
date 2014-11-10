@@ -25,18 +25,20 @@ public:
 
 	LODLevel* next;					// next LODLevel pointer
 	LODLevel* prev;					// previous LODLevel
-private:
+
+	///////////////////////////////////////////////////////
 	bool split();					// 1.split even point
 	bool predict(LODLevel* nextLOD);// 3.error vertex predict
 	bool findRadicalVert(int o,int e[]);	// 3.1 
 	bool findRadicalVert1(int o,int e[]);	// 3.1 
 	bool updateLOD(LODLevel* nextLOD);		// 4.update build next lod
 	bool saveErrorToFile(LODLevel* nextLOD); // 5.save error data to file
-	
+	bool saveCurrentMesh(); // 6.final step: save current mesh to file
+
 	void computeNormals();
 	void computeValence();
 
-public:
+	//////////////////////////////////////////////////////////
 	int evenNum;
 	bool setEven(int index);			// set Even 
 
@@ -46,7 +48,8 @@ public:
 	float ext_time;						// time to build this level
 
 	float threshold;					// error threshold
-private:
+
+
 	///////////////////////////////////////////////////////////
 	//	half edge
 	//	define edgemap using STL map
@@ -56,7 +59,8 @@ private:
 	Vertex *vertices;
 	Face *faces;
 	HalfEdge *he;
-private:
+
+	////////////////////////////////////////////////
 	// create Half Edge struct
 	void createHalfEdge();			// 0. create Half edge
 
@@ -68,4 +72,20 @@ private:
 	int findThirdVert(int ia, int ib);
 };
 
+
+
+class LODMeshLevel : public LODLevel
+{
+public:
+	LODMeshLevel();
+	void loadCoarest();
+
+	bool buildNextLevel();
+	bool undoUpdate();
+	bool radicalSubdivision();
+	bool undoPredict();
+
+	int maxLevel;
+	LODMeshLevel* nextLevel;
+};
 #endif

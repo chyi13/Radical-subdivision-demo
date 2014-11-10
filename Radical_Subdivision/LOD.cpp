@@ -9,6 +9,23 @@ LOD::LOD(void)
 	total_time = 0;
 }
 
+bool LOD::loadFromFile(const char* filename)
+{
+	if (strstr(filename, ".ply"))
+	{
+		load_ply_file(filename);
+	}
+	else if (strstr(filename, ".ase"))
+	{
+		load_ase_file(filename);
+	}
+	else
+	{
+		printf("Error: Unknonw file format!\n");
+		return false;
+	}
+}
+
 bool LOD::load_ase_file(const char* filename)
 {
 	if (!m_ASEfile.loadfile(filename))
@@ -16,7 +33,7 @@ bool LOD::load_ase_file(const char* filename)
 	// some other initial stuff
 
 	//
-	//	load ase object detial
+	//	load ase object detail
 	//
 
 	ASE_OBJECT_HEAD* l_pAseObjectHead  = m_ASEfile.getase_head();
@@ -972,6 +989,7 @@ void LOD::buildAllLevels()
 		p = p->next;
 		maxLevel = p->level;
 	}
+
 	printf("Total building time: %f\n",total_time);
 }
 

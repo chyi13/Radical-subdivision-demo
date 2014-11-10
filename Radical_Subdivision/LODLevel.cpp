@@ -151,7 +151,19 @@ bool LODLevel::buildNextLevel()
 		}
 	}
 	else
-		printf("Error: Split-Failed!\n");
+	{
+		if (level == 0)
+		{
+			printf("Error: Split Failed!\n");
+		}
+		else
+		{
+			printf("PM has been built!\n");
+			printf("saving PM..\n");
+			saveCurrentMesh();
+		}
+
+	}
 	return false;
 }
 
@@ -221,8 +233,13 @@ bool LODLevel::predict(LODLevel* nextLOD)
 bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
 {
 	FILE *file1,*file2;
-	file1 = fopen("error.txt","w");
-	file2 = fopen("errorXYZ.txt","w");
+	
+	char filename1[255], filename2[255];
+	sprintf(filename1,"error-%d.err",nextLOD->level);
+	sprintf(filename2,"errorXYZ-%d.err",nextLOD->level);
+
+	file1 = fopen(filename1,"w");
+	file2 = fopen(filename2,"w");
 	if (!file1 || !file2)
 	{
 		printf("Error: SAVE-File cannot open!\n");
@@ -241,6 +258,31 @@ bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
 
 	return true;
 }
+
+bool LODLevel::saveCurrentMesh()
+{
+	FILE* file;
+	char filename[] = "coarest.cor";
+	file = fopen(filename, "w");
+
+	// 0. vert num, face num
+	fprintf(file, "%d\n %d\n",m_iVertNum, m_iFaceNum);
+
+	// 1.save vertex first
+	for (int i = 0; i<m_iVertNum; i++)
+	{
+		fprintf(file, "%d %f %f %f\n",m_pVert[i].index, m_pVert[i].point.x, m_pVert[i].point.y, m_pVert[i].point.z);
+	}
+	
+	// 2.save faces
+	for (int i = 0; i<m_iFaceNum; i++)
+	{
+		fprintf(file, "%d %d %d\n", m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
+	}
+	fclose(file);
+	return true;
+}
+
 
 bool LODLevel::updateLOD(LODLevel* nextLOD)
 {
@@ -272,13 +314,13 @@ bool LODLevel::updateLOD(LODLevel* nextLOD)
 		}
 	}
 	// update error vertex index(index from previous level to next lod level)
-	for (int i= 0; i<next->m_iErrNum; i++)
+	/*for (int i= 0; i<next->m_iErrNum; i++)
 	{
 		for (int j= 0; j<3; j++)
 		{
 			nextLOD->m_pError[i].faceVertex[j] = tempMap.find(nextLOD->m_pError[i].faceVertex[j])->second;
 		}
-	}
+	}*/
 	return true;
 }
 
