@@ -7,17 +7,18 @@ LOD::LOD(void)
 	maxLevel = 0;
 	mSubLevel = 0;
 	total_time = 0;
+	buildRecover = false;
 }
 
 bool LOD::loadFromFile(const char* filename)
 {
 	if (strstr(filename, ".ply"))
 	{
-		load_ply_file(filename);
+		return load_ply_file(filename);
 	}
 	else if (strstr(filename, ".ase"))
 	{
-		load_ase_file(filename);
+		return load_ase_file(filename);
 	}
 	else
 	{
@@ -44,11 +45,11 @@ bool LOD::load_ase_file(const char* filename)
 
 	m_iVertNum = l_pAseObject->vertex_num;
 	m_iFaceNum = l_pAseObject->face_num;
-	 
+
 	m_pVert	   = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*m_iVertNum);
 	m_pFace	   = (LOD_FACE*)  malloc(sizeof(LOD_FACE)*m_iFaceNum);
 
-//	printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
+	//	printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
 	int i;
 	for (i=0;i<m_iVertNum;i++)
 	{
@@ -69,13 +70,16 @@ bool LOD::load_ase_file(const char* filename)
 
 		m_pFace[i].normal.x=m_pFace[i].normal.y=m_pFace[i].normal.z=0.0;
 	}
-	
+
 	// compute normals
 	computeNormals();
 
 	// compute adjacence
 	computeValence();
 
+	// sort
+	sortAdjVert();
+	
 	return true;
 }
 
@@ -85,14 +89,14 @@ bool LOD::load_ply_file(const char* filename)
 		return false;
 	PLY_OBJECT ply_obj;
 	ply_obj = m_ply.getObject();
-	
+
 	m_iVertNum = ply_obj.vertex_num;
 	m_iFaceNum = ply_obj.face_num;
-	 
+
 	m_pVert	   = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*m_iVertNum);
 	m_pFace	   = (LOD_FACE*)  malloc(sizeof(LOD_FACE)*m_iFaceNum);
 
-//	printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
+	//	printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
 	int i;
 	for (i=0;i<m_iVertNum;i++)
 	{
@@ -113,13 +117,16 @@ bool LOD::load_ply_file(const char* filename)
 
 		m_pFace[i].normal.x=m_pFace[i].normal.y=m_pFace[i].normal.z=0.0;
 	}
-	
+
 	// compute normals
 	computeNormals();
 
 	// compute adjacence
 	computeValence();
 
+	// sort 
+	sortAdjVert();
+	
 	return true;
 }
 
@@ -138,11 +145,11 @@ void LOD::computeNormals()
 		planeVector[0] = createVector(m_pVert[m_pFace[i].vertIndex[0]].point,m_pVert[m_pFace[i].vertIndex[1]].point);
 		planeVector[1] = createVector(m_pVert[m_pFace[i].vertIndex[0]].point,m_pVert[m_pFace[i].vertIndex[2]].point);
 		m_pFace[i].normal = cross(planeVector[0], planeVector[1]);
-		
+
 		normalize(m_pFace[i].normal);
 
-	//	printf("%f %f %f\n",m_pFace[i].normal.x,m_pFace[i].normal.y,m_pFace[i].normal.z);
-	
+		//	printf("%f %f %f\n",m_pFace[i].normal.x,m_pFace[i].normal.y,m_pFace[i].normal.z);
+
 		for(j=0;j<3;j++)
 		{
 			m_pVert[m_pFace[i].vertIndex[j]].normal.x += m_pFace[i].normal.x;
@@ -176,6 +183,108 @@ void LOD::computeValence()
 			m_pVert[m_pFace[i].vertIndex[j]].valence++;
 		}
 	}
+
+	//
+	FILE* temp;
+	temp = fopen("debug.log","a");
+	fprintf(temp,"*******\n");
+	for (i = 0; i<m_iVertNum; i++)
+		fprintf(temp,"%d\n",m_pVert[i].valence);
+	fclose(temp);
+}
+
+void LOD::sortAdjVert()
+{
+	int i,j;
+	// Now the somewhat harder part -- sort them by angle.  Pick an arbitrary one to start
+	// with.
+	for (i=0; i<m_iVertNum;i++)
+	{
+		if ( m_pVert[i].valence <= 2 ) continue;
+		if ( m_pVert[i].valence > 6) return;
+		// We'll use these.  A lot.
+		VERTEX normal = m_pVert[i].normal;
+		VERTEX vertex = createVector(m_pVert[i].point);
+
+		// Use this to sort them.
+		std::map<float, int> sortedVert;
+
+		// Just start with the first one, all the others will be stored relative to it, in
+		// CCW-wound order.
+		int vertexNum = m_pVert[i].adj[0];
+		sortedVert[0.0f] = vertexNum;
+
+		VERTEX refVector = createVector(m_pVert[vertexNum].point);
+		minus(refVector, vertex);
+
+		// Project the reference (angle == 0) vector into the tangent plane.
+		VERTEX projVec = normal;
+		product(projVec, dot(refVector,normal));
+		minus(refVector, projVec);
+		////for debug
+		//if( i == 11  && m_pVert[11].adj[0] == 403 )
+		//{
+		//	m_dpoint[0].x = refVector.x;
+		//	m_dpoint[0].y = refVector.y;
+		//	m_dpoint[0].z = refVector.z;
+		//}
+
+		normalize(refVector);
+
+		for (j=1; j<m_pVert[i].valence; j++)
+		{
+			vertexNum = m_pVert[i].adj[j];
+			if ( vertexNum == -1 ) continue;
+
+
+			// Find the vector from the vertex along this edge.
+			VERTEX vertVector = createVector(m_pVert[vertexNum].point);
+			minus(vertVector,vertex);
+
+			// Find the vector projected into the tangent plane.
+			projVec = normal;
+			product(projVec, dot(vertVector,normal));
+			minus(vertVector, projVec);
+			
+			////for debug
+			//if( i == 11  && m_pVert[11].adj[0] == 403 )
+			//{
+			//	m_dpoint[j].x = vertVector.x;
+			//	m_dpoint[j].y = vertVector.y;
+			//	m_dpoint[j].z = vertVector.z;
+			//}
+
+			normalize(vertVector);
+
+
+			// Find the angle between it and the refence vector.  
+			// Remember that v1 dot v2 = |v1||v2|cos(theta) = cos(theta) for normalized vectors.
+			float cosTheta = dot(vertVector,refVector);
+			if (cosTheta < -1.0f) cosTheta = -1.0f;
+			if (cosTheta > 1.0f) cosTheta = 1.0f;
+			float angle = acos(cosTheta);
+			angle *= 180.0f / (float)PI;
+
+			// To find the sign, it's a clockwise (negative) angle if the cross product points 
+			// away from the tangent plane normal, so map it properly.
+			VERTEX crossProd = cross(vertVector,refVector);
+			if (dot(crossProd,normal) < 0)
+			{
+				angle = 360 - angle;
+			}
+
+			sortedVert[angle] = vertexNum;
+		}
+
+		// Okay, it's all sorted, put it into the vertex's edge list in the right order.
+		std::map<float, int>::iterator it;
+		j=1;
+		for (it=sortedVert.begin(),it++; it!=sortedVert.end(); it++)
+		{
+			m_pVert[i].adj[j] = it->second;
+			j++;
+		}
+	}
 }
 
 void LOD::renderAse()
@@ -188,7 +297,7 @@ void LOD::render()
 	if (mSubLevel >0)
 	{
 		LODLevel *plod = &lod;
-		
+
 		// find the right level
 		int level = 0;
 		level = mSubLevel/4;
@@ -273,7 +382,7 @@ void LOD::render()
 					glVertex3f(plod->m_pVert[i].point.x,
 						plod->m_pVert[i].point.y,
 						plod->m_pVert[i].point.z);
-			//		glVertex3f(plod->next->m_p
+					//		glVertex3f(plod->next->m_p
 					glEnd();
 				}
 			}
@@ -292,17 +401,17 @@ void LOD::renderSubdivision()
 	glColor3f(1.0f,0.0f,0.0f);			// Set The Color
 	for(i = 0; i< m_iFaceNum; i++){
 		glBegin(m_iRenderMethod);// 用OpenGL命令绘制三角形网格
-		
+
 		//这里设置面法向量...........
 		glNormal3f(m_pFace[i].normal.x,m_pFace[i].normal.y,m_pFace[i].normal.z);
-		
+
 		//...........
 		glNormal3f(m_pVert[m_pFace[i].vertIndex[0]].normal.x,m_pVert[m_pFace[i].vertIndex[0]].normal.y,m_pVert[m_pFace[i].vertIndex[0]].normal.z);
 		glVertex3f(m_pVert[m_pFace[i].vertIndex[0]].point.x,m_pVert[m_pFace[i].vertIndex[0]].point.y,m_pVert[m_pFace[i].vertIndex[0]].point.z);
 
 		glNormal3f(m_pVert[m_pFace[i].vertIndex[1]].normal.x,m_pVert[m_pFace[i].vertIndex[1]].normal.y,m_pVert[m_pFace[i].vertIndex[1]].normal.z);
 		glVertex3f(m_pVert[m_pFace[i].vertIndex[1]].point.x,m_pVert[m_pFace[i].vertIndex[1]].point.y,m_pVert[m_pFace[i].vertIndex[1]].point.z);
-		
+
 		glNormal3f(m_pVert[m_pFace[i].vertIndex[2]].normal.x,m_pVert[m_pFace[i].vertIndex[2]].normal.y,m_pVert[m_pFace[i].vertIndex[2]].normal.z);
 		glVertex3f(m_pVert[m_pFace[i].vertIndex[2]].point.x,m_pVert[m_pFace[i].vertIndex[2]].point.y,m_pVert[m_pFace[i].vertIndex[2]].point.z);
 
@@ -353,8 +462,8 @@ bool LOD::trans2EulerPoly()
 					(a == e && ( b == d || b == f)) ||
 					(a == f && ( b == d || b == e)))
 				{
-						edgeCount ++;
-						continue;
+					edgeCount ++;
+					continue;
 				}
 				if ((a == d && ( c == e || b == f)) ||
 					(a == e && ( c == d || b == f)) ||
@@ -374,12 +483,12 @@ bool LOD::trans2EulerPoly()
 		}
 		if (edgeCount != 0)
 		{
-	//		printf("Error: edge count not larger than 3!\n");
-	//		printf("%d\n",edgeCount);
+			//		printf("Error: edge count not larger than 3!\n");
+			//		printf("%d\n",edgeCount);
 			errorFaceNum ++;
 		}
 	}
-	printf("Error: error face num: %d\n",errorFaceNum);
+	printf("Error: error face num: %d\n\r",errorFaceNum);
 	return false;
 }
 
@@ -392,7 +501,7 @@ void LOD::radicalSubdivision()
 
 	trans2EulerPoly();
 	printf("Current Vertex: %d\nNew   Vertex: %d\n",m_iVertNum,iNewVertNum);
-	
+
 	// allocate memory space
 	pNewVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX) * iNewVertNum);
 	pNewFace = (LOD_FACE *) malloc(sizeof(LOD_FACE)* iNewFaceNum);
@@ -423,7 +532,7 @@ void LOD::radicalSubdivision()
 	// (1)add a face vertex 
 	for (int i = 0; i<m_iFaceNum; i++)
 	{
-		
+
 		// 
 		//			a
 		//		   / \
@@ -450,7 +559,7 @@ void LOD::radicalSubdivision()
 
 	printf("Creating hf completed\n");
 	printf("Edges %d\n",edgemap.size()/2);
-	
+
 	printf("v-e+f: %d\n", m_iVertNum - edgemap.size()/2 + m_iFaceNum );
 	// (2)find face
 	// mark subdivided edge
@@ -458,7 +567,7 @@ void LOD::radicalSubdivision()
 
 	int tempFaceCount = 0;
 	int edgeMarkCount = 0;
-	
+
 	for (int i = 0; i<m_iFaceNum; i++)
 	{
 		for (int j = 0; j<3; j++)
@@ -502,7 +611,7 @@ void LOD::radicalSubdivision()
 			}
 
 		}
-		
+
 	}
 	printf("step 3 completed\n");
 	// step 44444444444
@@ -548,7 +657,7 @@ void LOD::radicalSubdivision()
 	pNewVert = pTempVert;
 
 	m_iVertNum = iNewVertNum;
-//	printf("face count1 = %d count2 = %d\n",m_iFaceNum,tempFaceCount);
+	//	printf("face count1 = %d count2 = %d\n",m_iFaceNum,tempFaceCount);
 	m_iFaceNum = tempFaceCount;
 	free(m_pVert);
 	m_pVert = pNewVert;
@@ -557,9 +666,11 @@ void LOD::radicalSubdivision()
 
 	// update valence & normals
 	computeNormals();
-	
+
 	computeValence();
-	
+
+	// sort
+	sortAdjVert();
 }
 
 void LOD::loopSubdivision()
@@ -778,7 +889,7 @@ void LOD::loopSubdivision()
 		pNewVert[iC].point.z = (1.0-nearnum*kb)*m_pVert[iC].point.z + kb * midz;
 
 	}
-	
+
 	// step 55555555555555555555555555555555
 	// copy data
 	iNewVertNum = iCurVert;
@@ -806,7 +917,7 @@ int LOD::findIndex(int a,int b,int* va,int* vb,int len)
 	for (int i = 0; i<len; i++)
 	{
 		if ( ((va[i] == a)&&(vb[i] == b)) ||
-			 ((va[i] == b)&&(vb[i] == a)))
+			((va[i] == b)&&(vb[i] == a)))
 			return i;
 	}
 	return -1; // cannot find edge<a,b>
@@ -823,9 +934,9 @@ void LOD::createHalfEdge()
 	vertices = new Vertex[numOfVertices];
 	faces = new Face[numOfFaces];
 
-//	nFace = numOfFaces;
+	//	nFace = numOfFaces;
 
-	
+
 	int i;
 
 	for(i=0 ; i<numOfVertices; i++){
@@ -836,7 +947,7 @@ void LOD::createHalfEdge()
 
 
 	for(i=0; i<numOfFaces ; i++){		
-		
+
 		int vi;
 		std::vector<int> v;  //use vector to store vertices' id of which the current face consists
 
@@ -844,21 +955,21 @@ void LOD::createHalfEdge()
 
 		/*file>>type;
 		while(file>>vi){					
-			v.push_back(vi);			
+		v.push_back(vi);			
 		}*/
 		v.push_back(m_pFace[i].vertIndex[0]);
 		v.push_back(m_pFace[i].vertIndex[1]);
 		v.push_back(m_pFace[i].vertIndex[2]);
-				
+
 		faces[i].ver = new Vertex[v.size()];
 		faces[i].nPolygon = v.size();
 		faces[i].faceVertexId = m_pFace[i].faceVertexID;	// add inner new face vertex id 
 
 		he = new HalfEdge[v.size()];
-		
+
 		int j = 0;
 		for(p= v.begin(); p != v.end(); p++){			
-//更改 *p
+			//更改 *p
 			faces[i].ver[j] = vertices[*p];		//access vertex from array of vertices according to its' id
 			faces[i].ver[j].id = *p;			//store its id				
 			j++;			
@@ -866,14 +977,14 @@ void LOD::createHalfEdge()
 
 
 		faces[i].firstEdge = &he[0];
-		
+
 		//construct halfedge
 		for(j=0, p=v.begin() ; j<v.size(); j++,p++){
 			faces[i].ver[j].startEdge = &he[j];
 			he[j].head = &faces[i].ver[(j+1)%v.size()];
 			he[j].leftf = &faces[i];
 			he[j].next = &he[(j+1)%v.size()];
-			
+
 			if((p+1)!= v.end()){				
 				Pair pair(*p, *(p+1));				
 				edgemap.insert(EdgeMap::value_type(pair, &he[j]));  //insert to edgemap
@@ -882,22 +993,22 @@ void LOD::createHalfEdge()
 				edgemap.insert(EdgeMap::value_type(pair, &he[j]));	//insert to edgemap
 			}			
 		}
-										
-											
+
+
 	}
-	
+
 	EdgeMap::const_iterator iter;
 	//set up halfedge sym pointer
 	for(iter = edgemap.begin(); iter != edgemap.end(); iter++){
-		
-			EdgeMap::const_iterator iter1;
-			EdgeMap::const_iterator iter2;
-			Pair p1(iter->first.a,iter->first.b);
-			Pair p2(iter->first.b,iter->first.a);
-			iter1 = edgemap.find(p1);
-			iter2 = edgemap.find(p2);
 
-			iter1->second->sym = iter2->second;
+		EdgeMap::const_iterator iter1;
+		EdgeMap::const_iterator iter2;
+		Pair p1(iter->first.a,iter->first.b);
+		Pair p2(iter->first.b,iter->first.a);
+		iter1 = edgemap.find(p1);
+		iter2 = edgemap.find(p2);
+
+		iter1->second->sym = iter2->second;
 	}
 }
 int LOD::hf_findPairVert(int ia,int ib)
@@ -905,7 +1016,7 @@ int LOD::hf_findPairVert(int ia,int ib)
 	Pair hfpair(ia,ib);
 	EdgeMap::const_iterator hfiterator;
 	hfiterator = edgemap.find(hfpair);  // find half edge pair
-	
+
 	if (hfiterator == edgemap.end())
 		return -1;
 	else
@@ -949,7 +1060,7 @@ int LOD::hf_findPairThirdVert(int ia, int ib)
 	EdgeMap::const_iterator hfiterator;
 	hfiterator = edgemap.find(hfpair);
 	Vertex* hfvertex = hfiterator->second->sym->leftf->ver;
-//////////////
+	//////////////
 
 	return hfvertex->id;
 }
@@ -976,7 +1087,7 @@ void LOD::prevLevel()
 void LOD::buildAllLevels()
 {
 	LODLevel* p = &lod;
-	
+
 	p->initLL(m_iVertNum,m_pVert,m_iFaceNum,m_pFace);
 
 	// input the threshold
@@ -991,6 +1102,31 @@ void LOD::buildAllLevels()
 	}
 
 	printf("Total building time: %f\n",total_time);
+}
+
+bool LOD::recoverAllLevels()
+{
+	if (buildRecover)
+	{
+		printf("Error: Already built!\n\r");
+		return false;
+	}
+	else	// if the recover sequence has not been built. then lodMesh is initialized by the coarest lodlevel
+	{
+
+		LODLevel* p = &lod;
+		while(p->next) p = p->next;
+		lodMesh.loadLODLevel(p);
+
+		LODMeshLevel* mp = &lodMesh; 
+		while (mp->radicalReverseSubdivide())
+		{
+			mp = mp->next;
+		}
+		printf("Recovery success!\n");
+		printf("Compressed model has been generated!\n");
+	}
+	return true;
 }
 
 LOD::~LOD(void)

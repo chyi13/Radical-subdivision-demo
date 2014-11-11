@@ -22,63 +22,85 @@ class LOD
 public:
 	LOD(void);
 	~LOD(void);
-	bool loadFromFile(const char* filename);
 
-	
-	void render();
-	void renderAse();
-	void renderSubdivision();
-
-	void radicalSubdivision();
-	void loopSubdivision();
-
-	void nextLevel();
-	void prevLevel();
-	//////////////////////////////////////////////////////////////////
-	//	build LOD level
-	
-
-	LOD_VERTEX	*m_pVert;			// vertex array
-	LOD_FACE	*m_pFace;			// face array
-
+	//////////////////////////////////////////////////////////////////////
+	// load file
+public:
+	bool loadFromFile(const char* filename);	// load 3d mesh file. (.ase .ply)
 private:
-	bool trans2EulerPoly();
-
 	bool load_ase_file(const char* filename);
 	bool load_ply_file(const char* filename);
 
+	ASEfile m_ASEfile;				// ASE file class
+	int			m_iObjectNum;		// ASE object number
+	PLYLoader m_ply;			// ply file object
+	// load file end
+	////////////////////////////////////////////////////////
 
-private:
-	void buildAllLevels();
-	LODLevel lod;					// lod structure
-	
-	float threshold;
-	//////////////////////////////////////////////////////////////////
-	// Render arguments
+	/////////////////////////////////////////////////////////////////////////
+	// render
 public:
+	void render();
+	void renderAse();
+	void renderSubdivision();
 	void setWired();
 private:
 	int m_iRenderMethod;
+	// render end
+	///////////////////////////////////////////////////////
 
-	float total_time;
+	///////////////////////////////////////////////////////////////////////
+	// subdivision
+public:
+	void radicalSubdivision();
+	void loopSubdivision();
 private:
+	bool trans2EulerPoly();
 	void computeNormals();
-
 	void computeValence();
+	void sortAdjVert();
+	// subdivision end
+	//////////////////////////////////////////////////////
 
-	int findIndex(int a,int b,int* va,int* vb,int len);
+	//////////////////////////////////////////////////////////////////////
+	// reverse subdivision
+public:
+	void nextLevel();
+	void prevLevel();
 private:
-	ASEfile m_ASEfile;				// ASE file class
-	int			m_iObjectNum;		// ASE object number
+	void buildAllLevels();
+	int findIndex(int a,int b,int* va,int* vb,int len);
+	// reverse subdivision end
+	/////////////////////////////////////////////////////
 
-	PLYLoader m_ply;			// ply file object
-	
+	//////////////////////////////////////////////////////////////////////
+	// reverse subdivision
+public:
+	bool recoverAllLevels(); 
+private:
+	LODMeshLevel lodMesh;
+	bool buildRecover;
+	// reverse subdivision end
+	/////////////////////////////////////////////////////
 
-	int			m_iVertNum;		// vertex number
+	//////////////////////////////////////////////////////////////////////
+	//	LOD data
+private:
+	LOD_VERTEX	*m_pVert;			// vertex array
+	LOD_FACE	*m_pFace;			// face array
+	int			m_iVertNum;			// vertex number
 	int			m_iFaceNum;			// face number
 
-	int			mSubLevel;		// 1,2,3,4 number
+	int			mSubLevel;		// number 1,2,3,4
 	int			maxLevel;		// max lod level
+	
+	LODLevel lod;					// lod structure
+	float threshold;
+	float total_time;
+	// data end
+	/////////////////////////////////////////////////
+
+	
 	//////////////////////////////////////////////////////////////////
 	// Half edge
 	
@@ -98,5 +120,7 @@ private:
 	int hf_findFaceVert(int ia,int ib);
 	int hf_findThirdVert(int ia,int ib);	// ia ib 之外的第三个顶点
 	int hf_findPairThirdVert(int ia, int ib);
+	// half edge end
+	////////////////////////////////////////////////////
 };
 #endif

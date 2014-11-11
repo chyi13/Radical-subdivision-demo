@@ -1,4 +1,5 @@
 #include "LODLevel.h"
+
 LODLevel::LODLevel()
 {
 }
@@ -193,6 +194,7 @@ bool LODLevel::predict(LODLevel* nextLOD)
 	
 	int abcVertices[3];
 	int errorIndex = 0;
+	
 	for (int i = 0; i<m_iVertNum; i++)
 	{
 		if (m_pVert[i].even == ODD)			// 1.if the vertex is ODD then predict
@@ -242,7 +244,7 @@ bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
 	file2 = fopen(filename2,"w");
 	if (!file1 || !file2)
 	{
-		printf("Error: SAVE-File cannot open!\n");
+		printf("Error: Cannot open SAVE-File!\n");
 		return false;
 	}
 	for (int i =0; i<nextLOD->m_iErrNum; i++)
@@ -266,7 +268,7 @@ bool LODLevel::saveCurrentMesh()
 	file = fopen(filename, "w");
 
 	// 0. vert num, face num
-	fprintf(file, "%d\n %d\n",m_iVertNum, m_iFaceNum);
+	fprintf(file, "%d\n%d\n",m_iVertNum, m_iFaceNum);
 
 	// 1.save vertex first
 	for (int i = 0; i<m_iVertNum; i++)
@@ -301,6 +303,7 @@ bool LODLevel::updateLOD(LODLevel* nextLOD)
 				tempMap.insert(std::pair<int,int>(nextLOD->m_pError[i].faceVertex[j],tempIndex));
 				nextLOD->m_pVert[tempIndex].point = this->m_pVert[nextLOD->m_pError[i].faceVertex[j]].point;
 				nextLOD->m_pVert[tempIndex].even = UNKNOWN;
+				nextLOD->m_pVert[tempIndex].index = tempIndex;
 
 				tempIndex++;
 			}
@@ -314,13 +317,13 @@ bool LODLevel::updateLOD(LODLevel* nextLOD)
 		}
 	}
 	// update error vertex index(index from previous level to next lod level)
-	/*for (int i= 0; i<next->m_iErrNum; i++)
+	for (int i= 0; i<next->m_iErrNum; i++)
 	{
 		for (int j= 0; j<3; j++)
 		{
 			nextLOD->m_pError[i].faceVertex[j] = tempMap.find(nextLOD->m_pError[i].faceVertex[j])->second;
 		}
-	}*/
+	}
 	return true;
 }
 
@@ -673,4 +676,32 @@ int LODLevel::hf_findFaceVert(int ia,int ib)
 
 LODLevel::~LODLevel(void)
 {
+}
+
+////////////////////////////////////////////////////////
+// LODMeshLevel
+
+LODMeshLevel::LODMeshLevel()
+{
+	maxLevel = 0;
+	next = NULL;
+	prev = NULL;
+}
+
+bool LODMeshLevel::loadLODLevel(LODLevel* lod)
+{
+	if (lod)
+	{
+		initLL(lod->m_iVertNum, lod->m_pVert, lod->m_iFaceNum, lod->m_pFace);
+		maxLevel = lod->level;
+		level = 0;
+	}
+	else
+		return false;
+}
+
+bool LODMeshLevel::radicalReverseSubdivide()
+{
+
+	return true;
 }

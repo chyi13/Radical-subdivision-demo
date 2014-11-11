@@ -3,6 +3,8 @@
 #ifndef FUNCTIONS_H
 #define FUNCTIONS_H
 
+#include "data_struct.h"
+
 float clamp( float x, float a, float b ){ return x<a ? a : (x<b?x:b); }
 float dot( const float *a, const float *b ){ return a[0]*b[0]+a[1]*b[1]+a[2]*b[2]; }
 float norm( const float *a ){ return sqrtf(dot(a,a)); }
@@ -21,6 +23,7 @@ void normalize( float *a )
 	float l = norm(a);
 	a[0]/=l; a[1]/=l; a[2]/=l;
 }
+
 GLubyte space[] = 
 {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 

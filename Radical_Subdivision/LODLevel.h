@@ -70,6 +70,8 @@ public:
 	int hf_findThirdVert(int ia,int ib);
 
 	int findThirdVert(int ia, int ib);
+	// half edge end
+	////////////////////////////////////////////////
 };
 
 
@@ -78,14 +80,11 @@ class LODMeshLevel : public LODLevel
 {
 public:
 	LODMeshLevel();
-	void loadCoarest();
+	bool loadLODLevel(LODLevel*);
+	bool radicalReverseSubdivide();
 
-	bool buildNextLevel();
-	bool undoUpdate();
-	bool radicalSubdivision();
-	bool undoPredict();
-
+	int level;
 	int maxLevel;
-	LODMeshLevel* nextLevel;
+	LODMeshLevel *next, *prev;
 };
 #endif
