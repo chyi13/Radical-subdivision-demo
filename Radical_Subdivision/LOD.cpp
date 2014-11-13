@@ -184,13 +184,6 @@ void LOD::computeValence()
 		}
 	}
 
-	//
-	FILE* temp;
-	temp = fopen("debug.log","a");
-	fprintf(temp,"*******\n");
-	for (i = 0; i<m_iVertNum; i++)
-		fprintf(temp,"%d\n",m_pVert[i].valence);
-	fclose(temp);
 }
 
 void LOD::sortAdjVert()
@@ -614,9 +607,9 @@ void LOD::radicalSubdivision()
 
 	}
 	printf("step 3 completed\n");
+	
 	// step 44444444444
 	// update vertices position
-
 	for (int i = 0; i<m_iVertNum; i++)
 	{
 		//////////////////////////////////////////
@@ -1113,18 +1106,23 @@ bool LOD::recoverAllLevels()
 	}
 	else	// if the recover sequence has not been built. then lodMesh is initialized by the coarest lodlevel
 	{
+		printf("Recovering from files...\n");
 
 		LODLevel* p = &lod;
 		while(p->next) p = p->next;
-		lodMesh.loadLODLevel(p);
 
-		LODMeshLevel* mp = &lodMesh; 
+		LODMeshLevel* mp = &lodMesh;
+		mp->initLL(p->m_iVertNum, p->m_pVert, p->m_iFaceNum, p->m_pFace);	// initialize the first level
+		mp->level = p->level;
+
 		while (mp->radicalReverseSubdivide())
 		{
 			mp = mp->next;
 		}
 		printf("Recovery success!\n");
 		printf("Compressed model has been generated!\n");
+		
+		buildRecover = true;
 	}
 	return true;
 }

@@ -12,7 +12,7 @@ LOD m_lod;
 void initGL()
 {
 	glClearColor(0.75f,0.75f,0.75f,1.f);
-	glShadeModel(GL_SMOOTH);
+	glShadeModel(GL_FLAT);
 	glClearDepth(1.0f);
 
 	glEnable(GL_DEPTH_TEST);					// open depth test
@@ -118,6 +118,10 @@ void keyboard(unsigned char key, int x, int y)
 		break;
 	case 'u':
 		m_lod.prevLevel();
+		break;
+	case 's':
+		printf("shit\n");
+		m_lod.recoverAllLevels();
 		break;
 	default:
 		break;

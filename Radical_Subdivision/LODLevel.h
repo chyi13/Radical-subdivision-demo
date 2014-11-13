@@ -80,8 +80,15 @@ class LODMeshLevel : public LODLevel
 {
 public:
 	LODMeshLevel();
-	bool loadLODLevel(LODLevel*);
+	bool initLL(int t_iVNum, LOD_VERTEX* pVert, int t_iFNum, LOD_FACE* pFace);
+	bool init(int t_iVNum, int t_iFNum);
+
 	bool radicalReverseSubdivide();
+	bool saveLevelToFile(LODMeshLevel*);
+
+	bool findErrVert(int a, int b, int c, float* err);
+	int findIndex(int a,int b,int* va,int* vb,int len);
+	bool findVertices(int a, int b, int& c, int& f);
 
 	int level;
 	int maxLevel;
