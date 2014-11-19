@@ -34,6 +34,8 @@ private:
 	ASEfile m_ASEfile;				// ASE file class
 	int			m_iObjectNum;		// ASE object number
 	PLYLoader m_ply;			// ply file object
+
+	char m_sFilename[255];
 	// load file end
 	////////////////////////////////////////////////////////
 
@@ -59,6 +61,9 @@ private:
 	void computeNormals();
 	void computeValence();
 	void sortAdjVert();
+	bool saveToPly();
+
+	int m_iMaxLevel;
 	// subdivision end
 	//////////////////////////////////////////////////////
 

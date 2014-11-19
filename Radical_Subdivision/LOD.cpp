@@ -6,12 +6,26 @@ LOD::LOD(void)
 	m_iRenderMethod = GL_LINE_LOOP;
 	maxLevel = 0;
 	mSubLevel = 0;
+	m_iMaxLevel = 0;
+	
 	total_time = 0;
 	buildRecover = false;
 }
 
 bool LOD::loadFromFile(const char* filename)
 {
+	char t_fn[255];
+	strcpy(t_fn, filename);
+
+	int i;
+	for (i = 0; i<strlen(t_fn); i++)
+	{
+		if (t_fn[i] == '.')
+			break;
+	}
+
+	strncpy(m_sFilename, t_fn, i);	// get rid of the suffix
+
 	if (strstr(filename, ".ply"))
 	{
 		return load_ply_file(filename);
@@ -278,6 +292,54 @@ void LOD::sortAdjVert()
 			j++;
 		}
 	}
+}
+
+bool LOD::saveToPly()
+{
+	char t_sFileN[255];
+	char t_sLevel[255];
+	sprintf(t_sLevel, "-%d", m_iMaxLevel);
+
+	strcpy(t_sFileN, m_sFilename);		// "name"
+	strcat(t_sFileN, t_sLevel);			// "-level"
+	strcat(t_sFileN, ".ply");			// ".ply"
+
+	printf("%s\n", t_sFileN);
+
+	FILE* t_pFile = fopen(t_sFileN, "r");
+	if (t_pFile != nullptr)		// check if the file already exists.
+	{
+		printf("Error: Already has .ply file\n");	// exist just return;
+	}
+	else				// if not, create the file
+	{
+		t_pFile = fopen(t_sFileN, "w");
+
+		fprintf(t_pFile,"ply\nformat ascii 1.0\n"
+			"comment File created by Chai Yi's thesis project\n"
+			"element vertex %d\n"
+			"property float x\n"
+			"property float y\n"
+			"property float z\n"
+			"element face %d\n"
+			"property list uchar int vertex_indices\n"
+			"end_header\n",m_iVertNum, m_iFaceNum);		// vertex num, face num
+
+		for (int i = 0; i<m_iVertNum; i++)
+		{
+			fprintf(t_pFile, "%f %f %f\n", m_pVert[i].point.x,
+				m_pVert[i].point.y, m_pVert[i].point.z);
+		}
+
+		for (int i = 0; i<m_iFaceNum; i++)
+		{
+			fprintf(t_pFile, "3 %d %d %d\n", m_pFace[i].vertIndex[0],
+				m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
+		}
+	}
+
+	fclose(t_pFile);
+	return true;
 }
 
 void LOD::renderAse()
@@ -664,6 +726,11 @@ void LOD::radicalSubdivision()
 
 	// sort
 	sortAdjVert();
+
+	// save
+	saveToPly();
+
+	m_iMaxLevel++;
 }
 
 void LOD::loopSubdivision()

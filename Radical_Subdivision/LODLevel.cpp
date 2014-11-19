@@ -257,10 +257,14 @@ bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
 
 	for (int i =0; i<nextLOD->m_iErrNum; i++)
 	{
-		fprintf(file1,"%d %f %f %f %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
+		if (nextLOD->m_pError[i].errXYZ[0] > threshold
+			|| nextLOD->m_pError[i].errXYZ[1] > threshold
+			|| nextLOD->m_pError[i].errXYZ[2] > threshold)
+		{
+			fprintf(file1,"%d %f %f %f %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
 			nextLOD->m_pError[i].errXYZ[0],nextLOD->m_pError[i].errXYZ[1],nextLOD->m_pError[i].errXYZ[2],
 			nextLOD->m_pError[i].faceVertex[0],nextLOD->m_pError[i].faceVertex[1],nextLOD->m_pError[i].faceVertex[2]);
-
+		}
 		fprintf(file2,"%f %f %f\n",nextLOD->m_pError[i].errXYZ[0],nextLOD->m_pError[i].errXYZ[1],nextLOD->m_pError[i].errXYZ[2]);
 	}
 	fclose(file1);
@@ -938,7 +942,7 @@ bool LODMeshLevel::saveLevelToFile(LODMeshLevel* nextLevel)
 	if (t_pFile == nullptr)
 		return false;
 	fprintf(t_pFile,"ply\nformat ascii 1.0\n"
-		"comment File created by ReMESH v2.1alpha (2008)\n"
+		"comment File created by Chai Yi's thesis project\n"
 		"element vertex %d\n"
 		"property float x\n"
 		"property float y\n"

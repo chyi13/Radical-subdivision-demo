@@ -8,7 +8,9 @@ bool ASEfile::loadfile(const char* filename)
 {
 	FILE* file;
 	ASE_OBJECT* p,*q;
-	char line[200];
+	
+	getRealName(filename);
+
 	file=fopen(filename,"r");
 	if (file==NULL)
 	{
@@ -20,7 +22,9 @@ bool ASEfile::loadfile(const char* filename)
 	head=(ASE_OBJECT_HEAD*)malloc(sizeof(ASE_OBJECT_HEAD));
 	head->head=NULL;
 	head->object_number=0;
+	
 	char* ptr;
+	char line[200];
 	while(!feof(file))
 	{
 		fgets(line,200,file);
@@ -176,6 +180,69 @@ void ASEfile::centralize()
 	}
 
 }
+
+void ASEfile::getRealName(const char* fn)
+{
+	char t_fn[255];
+	strcpy(t_fn, fn);
+
+	int i;
+	for (i = 0; i<strlen(t_fn); i++)
+	{
+		if (t_fn[i] == '.')
+			break;
+	}
+	i--;
+
+	strncpy(m_sFileN, t_fn, i);
+}
+
+bool ASEfile::outputPLY()
+{
+	char t_sFileN[255];
+	strcat(t_sFileN, m_sFileN);
+	strcat(t_sFileN, ".ply");
+	FILE* t_pFile = fopen(t_sFileN, "r");
+	if (t_pFile != nullptr)		// check if the file already exists.
+	{
+		printf("Error: It already has .ply file\n");	// exist just return;
+	}
+	else				// if not, create the file
+	{
+		t_pFile = fopen(t_sFileN, "w");
+
+		if (head == nullptr)
+			return false;
+
+		ASE_OBJECT* p;
+		p=head->head;
+
+		fprintf(t_pFile,"ply\nformat ascii 1.0\n"
+			"comment File created by Chai Yi's thesis project\n"
+			"element vertex %d\n"
+			"property float x\n"
+			"property float y\n"
+			"property float z\n"
+			"element face %d\n"
+			"property list uchar int vertex_indices\n"
+			"end_header\n",p->vertex_num, p->face_num);		// vertex num, face num
+		for (int i = 0; i<p->vertex_num; i++)
+		{
+			fprintf(t_pFile,"%f %f %f\n" ,p->vertex_list[i].x,
+				p->vertex_list[i].y, p->vertex_list[i].z);
+		}
+
+		for (int i = 0; i<p->face_num; i++)
+		{
+			fprintf(t_pFile, "3 %d %d %d\n", p->face_list[i].index[0],
+				p->face_list[i].index[1], p->face_list[i].index[2]);
+		}
+		
+	}
+	fclose(t_pFile);
+	return true;
+}
+
 ASEfile::~ASEfile(void)
 {
 }
