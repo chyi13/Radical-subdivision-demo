@@ -2,13 +2,14 @@
 
 bool gSwitch[3] = {false};
 
-extern LOD m_lod;
+extern LODBase* m_LOD;
 
 void init() 
 {
 	initGL();
+	m_LOD = new LoopLOD();
 
-	if (!m_lod.loadFromFile("cow.ply"))//"bun_zipper_res2.ase"))
+	if (!m_LOD->loadFromFile("cow.ply"))//"bun_zipper_res2.ase"))
 	{
 		printf("File not found!\n");
 		return;

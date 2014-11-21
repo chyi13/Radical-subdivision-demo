@@ -18,29 +18,35 @@
     <ClCompile Include="main.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="LOD.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ASEfile.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="LODLevel.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="PLYLoader.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GlutBase.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="LODBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HalfEdgeBase.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ASELoader.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RadicalLOD.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LoopLOD.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LoopLODLevel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RadicalLODLevel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="LOD.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ASEfile.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="data_struct.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -50,13 +56,31 @@
     <ClInclude Include="pair.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="LODLevel.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="PLYLoader.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="GlutBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LODBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HalfEdgeBase.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ASELoader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RadicalLOD.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LoopLOD.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LoopLODLevel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RadicalLODLevel.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -1,10 +1,10 @@
-#include "ASEfile.h"
+#include "ASELoader.h"
 
-ASEfile::ASEfile(void)
+ASELoader::ASELoader(void)
 {
 }
 
-bool ASEfile::loadfile(const char* filename)
+bool ASELoader::loadfile(const char* filename)
 {
 	FILE* file;
 	ASE_OBJECT* p,*q;
@@ -96,7 +96,7 @@ bool ASEfile::loadfile(const char* filename)
 	return true;
 
 }
-void ASEfile::render()
+void ASELoader::render()
 {
 	int it;
 	ASE_OBJECT* temp;
@@ -119,7 +119,7 @@ void ASEfile::render()
 		temp=temp->next;
 	}
 }
-void ASEfile::print()
+void ASELoader::print()
 {
 	FILE* fw;
 	fw=fopen("1.txt","w");
@@ -135,7 +135,7 @@ void ASEfile::print()
 		temp=temp->next;
 	}
 }
-void ASEfile::centralize()
+void ASELoader::centralize()
 {
 	if (!head!=NULL)
 		return;
@@ -181,7 +181,7 @@ void ASEfile::centralize()
 
 }
 
-void ASEfile::getRealName(const char* fn)
+void ASELoader::getRealName(const char* fn)
 {
 	char t_fn[255];
 	strcpy(t_fn, fn);
@@ -192,12 +192,11 @@ void ASEfile::getRealName(const char* fn)
 		if (t_fn[i] == '.')
 			break;
 	}
-	i--;
 
 	strncpy(m_sFileN, t_fn, i);
 }
 
-bool ASEfile::outputPLY()
+bool ASELoader::outputPLY()
 {
 	char t_sFileN[255];
 	strcat(t_sFileN, m_sFileN);
@@ -243,6 +242,6 @@ bool ASEfile::outputPLY()
 	return true;
 }
 
-ASEfile::~ASEfile(void)
+ASELoader::~ASELoader(void)
 {
 }

@@ -3,7 +3,8 @@
 #define GLUT_BASE_H
 
 #include <GL/glut.h>
-#include "LOD.h"
+#include "RadicalLOD.h"
+#include "LoopLOD.h"
 
 void initGL();
 

@@ -7,7 +7,7 @@ float mo[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 int width, height;
 float scale_v[3] ={1.0f,1.0f,1.0f};
 
-LOD m_lod;
+LODBase* m_LOD;
 
 void initGL()
 {
@@ -51,7 +51,7 @@ void display()
 		//renderAse();
 		
 		//mloader.render();
-		m_lod.render();
+		m_LOD->render();
 	}
 	glPopMatrix();
 
@@ -107,21 +107,19 @@ void keyboard(unsigned char key, int x, int y)
 		glutFullScreen();
 		break;
 	case 'r':
-		m_lod.radicalSubdivision();
-//		m_lod.loopSubdivision();
+		m_LOD->subdivision();
 		break;
 	case 'w':
-		m_lod.setWired();
+		m_LOD->setWired();
 		break;
 	case 'b':
-		m_lod.nextLevel();
+		m_LOD->nextLevel();
 		break;
 	case 'u':
-		m_lod.prevLevel();
+		m_LOD->prevLevel();
 		break;
 	case 's':
-		printf("shit\n");
-		m_lod.recoverAllLevels();
+		m_LOD->recoverAllLevels();
 		break;
 	default:
 		break;

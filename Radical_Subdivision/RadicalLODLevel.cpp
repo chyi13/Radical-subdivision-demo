@@ -1,10 +1,10 @@
-#include "LODLevel.h"
+#include "RadicalLODLevel.h"
 
-LODLevel::LODLevel()
+RadicalLODLevel::RadicalLODLevel()
 {
 }
 
-void LODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFace)
+void RadicalLODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFace)
 {
 	ext_time = 0;
 	level = 0;
@@ -27,7 +27,7 @@ void LODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFace)
 	computeValence();
 }
 
-void LODLevel::init(int tVNum, int tFNum, int tENum)
+void RadicalLODLevel::init(int tVNum, int tFNum, int tENum)
 {
 	ext_time = 0;
 	next = nullptr;
@@ -38,31 +38,26 @@ void LODLevel::init(int tVNum, int tFNum, int tENum)
 
 	m_pVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*m_iVertNum);
 	m_pFace = (LOD_FACE*)  malloc(sizeof(LOD_FACE)*m_iFaceNum);
-	m_pError = (LOD_ERROR*)malloc(sizeof(LOD_ERROR)*m_iErrNum);		// Error data
+	m_pError = (RadicalLODError*)malloc(sizeof(RadicalLODError)*m_iErrNum);		// Error data
 }
 
-void LODLevel::computeNormals()
+void RadicalLODLevel::computeNormals()
 {
 	int i,j;
-
 	for(i = 0 ; i < m_iVertNum; i++)
 	{
 		m_pVert[i].normal.x = m_pVert[i].normal.y = m_pVert[i].normal.z= 0;
 	}
-	
+
 	for(i = 0 ; i< m_iFaceNum; i++)
 	{
 		VERTEX planeVector[2];
-		
-//		printf("%d %d %d\n",m_pFace[i].vertIndex[0],m_pFace[i].vertIndex[1],m_pFace[i].vertIndex[2]);
 
 		planeVector[0] = createVector(m_pVert[m_pFace[i].vertIndex[0]].point,m_pVert[m_pFace[i].vertIndex[1]].point);
 		planeVector[1] = createVector(m_pVert[m_pFace[i].vertIndex[0]].point,m_pVert[m_pFace[i].vertIndex[2]].point);
 		m_pFace[i].normal = cross(planeVector[0], planeVector[1]);
 
 		normalize(m_pFace[i].normal);
-
-//		printf("%f %f %f\n",m_pFace[i].normal.x,m_pFace[i].normal.y,m_pFace[i].normal.z);
 	
 		for(j=0;j<3;j++)
 		{
@@ -79,7 +74,7 @@ void LODLevel::computeNormals()
 	}
 }
 
-void LODLevel::computeValence()
+void RadicalLODLevel::computeValence()
 {
 	// only for closed surface
 	int i,j;
@@ -99,7 +94,7 @@ void LODLevel::computeValence()
 	}
 }
 
-bool LODLevel::buildNextLevel()
+bool RadicalLODLevel::buildNextLevel()
 {
 	// 00000000000000000000000000
 	printf("\r\n------------------building level %d-------------------\n",level+1);
@@ -113,9 +108,10 @@ bool LODLevel::buildNextLevel()
 	{
 		printf("Success! Split\n");
 		// 222222222222222222222222222222222 initialize
-		next = new LODLevel();
+		next = new RadicalLODLevel();
 		next->level = level+1;				// level ++
 		next->init(evenNum, m_iFaceNum/3, m_iVertNum - evenNum);		// face num = current faceNum/3
+		strcpy(next->m_sLODName, m_sLODName);
 
 		for (int i = 0,j = 0; i<m_iVertNum; i++)			// save current even vertex
 		{
@@ -172,7 +168,7 @@ bool LODLevel::buildNextLevel()
 }
 
 
-bool LODLevel::split()
+bool RadicalLODLevel::split()
 {
 	int i;
 	for (i = 0; i<m_iVertNum;i++)
@@ -184,7 +180,7 @@ bool LODLevel::split()
 	return setEven(i);
 }
 
-bool LODLevel::predict(LODLevel* nextLOD)
+bool RadicalLODLevel::predict(RadicalLODLevel* nextLOD)
 {
 	///////////////////////////////
 	//			a
@@ -235,25 +231,22 @@ bool LODLevel::predict(LODLevel* nextLOD)
 	return true;
 }
 
-bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
+bool RadicalLODLevel::saveErrorToFile(RadicalLODLevel* nextLOD)
 {
-	FILE *file1,*file2;
+	FILE* t_pFile;
 	
-	char filename1[255], filename2[255];
-	sprintf(filename1,"error-%d.err",nextLOD->level);
-	sprintf(filename2,"errorXYZ-%d.err",nextLOD->level);
+	char t_sFileN[255];
+	sprintf(t_sFileN,"./generate/%s_radical-%d.err", m_sLODName, nextLOD->level);
 
-	file1 = fopen(filename1,"w");
-	file2 = fopen(filename2,"w");
-	if (!file1 || !file2)
+	t_pFile = fopen(t_sFileN,"w");
+	if (t_pFile == nullptr)
 	{
 		printf("Error: Cannot open SAVE-File!\n");
 		return false;
 	}
 
 	// 
-	fprintf(file1, "%d\n", nextLOD->m_iErrNum);
-	fprintf(file2, "%d\n", nextLOD->m_iErrNum);
+	fprintf(t_pFile, "%d\n", nextLOD->m_iErrNum);
 
 	for (int i =0; i<nextLOD->m_iErrNum; i++)
 	{
@@ -261,44 +254,43 @@ bool LODLevel::saveErrorToFile(LODLevel* nextLOD)
 			|| nextLOD->m_pError[i].errXYZ[1] > threshold
 			|| nextLOD->m_pError[i].errXYZ[2] > threshold)
 		{
-			fprintf(file1,"%d %f %f %f %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
+			fprintf(t_pFile,"%d %f %f %f %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
 			nextLOD->m_pError[i].errXYZ[0],nextLOD->m_pError[i].errXYZ[1],nextLOD->m_pError[i].errXYZ[2],
 			nextLOD->m_pError[i].faceVertex[0],nextLOD->m_pError[i].faceVertex[1],nextLOD->m_pError[i].faceVertex[2]);
 		}
-		fprintf(file2,"%f %f %f\n",nextLOD->m_pError[i].errXYZ[0],nextLOD->m_pError[i].errXYZ[1],nextLOD->m_pError[i].errXYZ[2]);
 	}
-	fclose(file1);
-	fclose(file2);
-
+	fclose(t_pFile);
 	return true;
 }
 
-bool LODLevel::saveCurrentMesh()
+bool RadicalLODLevel::saveCurrentMesh()
 {
-	FILE* file;
-	char filename[] = "coarest.cor";
-	file = fopen(filename, "w");
+	FILE* t_pFile;
+	char t_sFileN[255];
+	sprintf(t_sFileN, "./generate/%s_radical.cor", m_sLODName);
+	printf("shit%s\n",t_sFileN);
+	t_pFile = fopen(t_sFileN, "w");
 
 	// 0. vert num, face num
-	fprintf(file, "%d\n%d\n",m_iVertNum, m_iFaceNum);
+	fprintf(t_pFile, "%d\n%d\n",m_iVertNum, m_iFaceNum);
 
 	// 1.save vertex first
 	for (int i = 0; i<m_iVertNum; i++)
 	{
-		fprintf(file, "%d %f %f %f\n",m_pVert[i].index, m_pVert[i].point.x, m_pVert[i].point.y, m_pVert[i].point.z);
+		fprintf(t_pFile, "%d %f %f %f\n",m_pVert[i].index, m_pVert[i].point.x, m_pVert[i].point.y, m_pVert[i].point.z);
 	}
 	
 	// 2.save faces
 	for (int i = 0; i<m_iFaceNum; i++)
 	{
-		fprintf(file, "%d %d %d\n", m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
+		fprintf(t_pFile, "%d %d %d\n", m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
 	}
-	fclose(file);
+	fclose(t_pFile);
 	return true;
 }
 
 
-bool LODLevel::updateLOD(LODLevel* nextLOD)
+bool RadicalLODLevel::updateLOD(RadicalLODLevel* nextLOD)
 {
 	std::map<int,int> tempMap;			// <original id, current id>
 	std::map<int,int>::iterator it;
@@ -339,7 +331,7 @@ bool LODLevel::updateLOD(LODLevel* nextLOD)
 	return true;
 }
 
-bool LODLevel::findRadicalVert1(int o, int e[])
+bool RadicalLODLevel::findRadicalVert1(int o, int e[])
 {
 	int abcIndex= 0;
 	for (int i = 0; i<m_iFaceNum; i++)
@@ -427,7 +419,7 @@ bool LODLevel::findRadicalVert1(int o, int e[])
 	else
 		return false;
 }
-bool LODLevel::findRadicalVert(int o, int e[])
+bool RadicalLODLevel::findRadicalVert(int o, int e[])
 {
 	// iterate faces 
 	int abcIndex = 0; // a,b,c 0,1,2
@@ -474,7 +466,7 @@ bool LODLevel::findRadicalVert(int o, int e[])
 }
 
 
-bool LODLevel::setEven(int index)
+bool RadicalLODLevel::setEven(int index)
 {
 	if (m_pVert[index].even == EVEN)
 		return true;
@@ -544,162 +536,21 @@ bool LODLevel::setEven(int index)
 	return true;
 }
 
-int LODLevel::findThirdVert(int ia, int ib)
-{
-	for (int i =0; i<m_iFaceNum; i++)
-	{
-		for (int j=0; j<3; j++)
-		{
-			if ((m_pFace[i].vertIndex[j]==ia) && (m_pFace[i].vertIndex[(j+1)%3]==ib))
-			{
-				return m_pFace[i].vertIndex[(j+2)%3];
-			}
-		}
-	}
-	return -1;
-}
-
-void LODLevel::createHalfEdge()
-{
-	int numOfVertices=0;
-	int numOfFaces=0;
-
-	numOfVertices = m_iVertNum;
-	numOfFaces = m_iFaceNum;
-
-	vertices = new Vertex[numOfVertices];
-	faces = new Face[numOfFaces];
-
-//	nFace = numOfFaces;
-
-	
-	int i;
-
-	for(i=0 ; i<numOfVertices; i++){
-		vertices[i].coord.x = m_pVert[i].point.x;
-		vertices[i].coord.y = m_pVert[i].point.y;
-		vertices[i].coord.z = m_pVert[i].point.z;
-	}		
-
-
-	for(i=0; i<numOfFaces ; i++){		
-		int vi;
-		std::vector<int> v;  //use vector to store vertices' id of which the current face consists
-
-		std::vector<int>::const_iterator p;
-
-		v.push_back(m_pFace[i].vertIndex[0]);
-		v.push_back(m_pFace[i].vertIndex[1]);
-		v.push_back(m_pFace[i].vertIndex[2]);
-				
-		faces[i].ver = new Vertex[v.size()];
-		faces[i].nPolygon = v.size();
-		faces[i].faceVertexId = m_pFace[i].faceVertexID;	// add inner new face vertex id 
-
-		he = new HalfEdge[v.size()];
-
-		int j = 0;
-		for(p= v.begin(); p != v.end(); p++){			
-			//¸ü¸Ä *p
-			faces[i].ver[j] = vertices[*p];		//access vertex from array of vertices according to its' id
-			faces[i].ver[j].id = *p;			//store its id				
-			j++;			
-		}
-
-
-		faces[i].firstEdge = &he[0];
-		
-		//construct halfedge
-		for(j=0, p=v.begin() ; j<v.size(); j++,p++){
-			faces[i].ver[j].startEdge = &he[j];
-			he[j].head = &faces[i].ver[(j+1)%v.size()];
-			he[j].leftf = &faces[i];
-			he[j].next = &he[(j+1)%v.size()];
-			
-			if((p+1)!= v.end()){				
-				Pair pair(*p, *(p+1));				
-				edgemap.insert(EdgeMap::value_type(pair, &he[j]));  //insert to edgemap
-			}else{				
-				Pair pair(*p, *v.begin());
-				edgemap.insert(EdgeMap::value_type(pair, &he[j]));	//insert to edgemap
-			}			
-		}
-										
-											
-	}
-	
-	EdgeMap::const_iterator iter;
-	//set up halfedge sym pointer
-	for(iter = edgemap.begin(); iter != edgemap.end(); iter++){
-		
-			EdgeMap::const_iterator iter1;
-			EdgeMap::const_iterator iter2;
-			Pair p1(iter->first.a,iter->first.b);
-			Pair p2(iter->first.b,iter->first.a);
-			iter1 = edgemap.find(p1);
-			iter2 = edgemap.find(p2);
-
-			iter1->second->sym = iter2->second;
-	}
-}
-int LODLevel::hf_findPairVert(int ia,int ib)
-{
-	Pair hfpair(ia,ib);
-	EdgeMap::const_iterator hfiterator;
-	hfiterator = edgemap.find(hfpair);  // find half edge pair
-	
-	int tempVertexId = hfiterator->second->sym->leftf->faceVertexId;
-
-	return tempVertexId;
-
-}
-
-int LODLevel::hf_findThirdVert(int ia,int ib)
-{
-	Pair hfpair(ia,ib);
-	EdgeMap::const_iterator hfiterator;
-	hfiterator=edgemap.find(hfpair);
-	Vertex* hfvertex;
-	hfvertex=hfiterator->second->leftf->ver;
-
-	int i;
-	for (i=0;i<3;i++)
-	{
-		if (hfvertex[i].id != ia && hfvertex[i].id != ib)
-		{
-			return hfvertex[i].id;
-		}
-	}
-
-	return -1;
-}
-
-int LODLevel::hf_findFaceVert(int ia,int ib)
-{
-	Pair hfpair(ia,ib);
-	EdgeMap::const_iterator hfiterator;
-	hfiterator = edgemap.find(hfpair);
-
-	return hfiterator->second->leftf->faceVertexId;
-}
-
-
-
-LODLevel::~LODLevel(void)
+RadicalLODLevel::~RadicalLODLevel(void)
 {
 }
 
 ////////////////////////////////////////////////////////
 // LODMeshLevel
 
-LODMeshLevel::LODMeshLevel()
+RadicalLODMeshLevel::RadicalLODMeshLevel()
 {
 	maxLevel = 0;
 	next = NULL;
 	prev = NULL;
 }
 
-bool LODMeshLevel::initLL(int t_iVNum, LOD_VERTEX* pVert, int t_iFNum, LOD_FACE* pFace)
+bool RadicalLODMeshLevel::initLL(int t_iVNum, LOD_VERTEX* pVert, int t_iFNum, LOD_FACE* pFace)
 {
 	m_iVertNum = t_iVNum;
 	m_iFaceNum = t_iFNum;
@@ -725,7 +576,7 @@ bool LODMeshLevel::initLL(int t_iVNum, LOD_VERTEX* pVert, int t_iFNum, LOD_FACE*
 		return false;
 }
 
-bool LODMeshLevel::init(int t_iVNum, int t_iFNum)
+bool RadicalLODMeshLevel::init(int t_iVNum, int t_iFNum)
 {
 	m_iVertNum = t_iVNum;
 	m_iFaceNum = t_iFNum;
@@ -739,11 +590,11 @@ bool LODMeshLevel::init(int t_iVNum, int t_iFNum)
 		return false;
 }
 
-bool LODMeshLevel::radicalReverseSubdivide()
+bool RadicalLODMeshLevel::radicalReverseSubdivide()
 {
 	char t_sErrFName[255];
 	FILE* t_pFile;
-	sprintf(t_sErrFName, "error-%d.err", level);
+	sprintf(t_sErrFName, "./generate/%s_radical-%d.err", m_sLODName, level);
 	printf("reading file: %s\n",t_sErrFName);
 	t_pFile = fopen(t_sErrFName, "r");
 	if (t_pFile == nullptr)
@@ -757,7 +608,7 @@ bool LODMeshLevel::radicalReverseSubdivide()
 	// start load err information
 	fscanf(t_pFile, "%d", &m_iErrNum);	// error number
 
-	m_pError = (LOD_ERROR*) malloc(sizeof(LOD_ERROR) * m_iErrNum);
+	m_pError = (RadicalLODError*) malloc(sizeof(RadicalLODError) * m_iErrNum);
 
 	for (int i = 0; i<m_iErrNum; i++)
 	{
@@ -767,7 +618,7 @@ bool LODMeshLevel::radicalReverseSubdivide()
 	}
 	fclose(t_pFile);
 
-	next = new LODMeshLevel();
+	next = new RadicalLODMeshLevel();
 	next->level = level-1;
 	int t_iNewVertNum = m_iVertNum + m_iFaceNum;
 	int t_iNewFaceNum = m_iFaceNum *3;
@@ -776,6 +627,7 @@ bool LODMeshLevel::radicalReverseSubdivide()
 	if (!(next->init(t_iNewVertNum, t_iNewFaceNum)) )// initialize next lod mesh
 		return false;
 
+	strcpy(next->m_sLODName, m_sLODName);
 	// step 111111111111111
 	// copy vertex to the new Vertex space
 	for (t_iCurVert = 0; t_iCurVert<m_iVertNum; t_iCurVert++)
@@ -932,11 +784,11 @@ bool LODMeshLevel::radicalReverseSubdivide()
 	return true;
 }
 
-bool LODMeshLevel::saveLevelToFile(LODMeshLevel* nextLevel)
+bool RadicalLODMeshLevel::saveLevelToFile(RadicalLODMeshLevel* nextLevel)
 {
 	FILE* t_pFile;
 	char t_sFName[255];
-	sprintf(t_sFName, "lod-%d.ply", nextLevel->level);
+	sprintf(t_sFName, "./generate/%s_radical_lod-%d.ply", nextLevel->m_sLODName, nextLevel->level);
 
 	t_pFile = fopen(t_sFName, "w");
 	if (t_pFile == nullptr)
@@ -968,7 +820,7 @@ bool LODMeshLevel::saveLevelToFile(LODMeshLevel* nextLevel)
 	return true;
 }
 
-bool LODMeshLevel::findErrVert(int a, int b, int c, float* err)
+bool RadicalLODMeshLevel::findErrVert(int a, int b, int c, float* err)
 {
 	for (int i = 0; i<m_iErrNum; i++)
 	{
@@ -991,7 +843,7 @@ bool LODMeshLevel::findErrVert(int a, int b, int c, float* err)
 	return false;
 }
 
-int LODMeshLevel::findIndex(int a,int b,int* va,int* vb,int len)
+int RadicalLODMeshLevel::findIndex(int a,int b,int* va,int* vb,int len)
 {
 	for (int i = 0; i<len; i++)
 	{
@@ -1002,7 +854,7 @@ int LODMeshLevel::findIndex(int a,int b,int* va,int* vb,int len)
 	return -1; // cannot find edge<a,b>
 }
 
-bool LODMeshLevel::findVertices(int a, int b, int& c, int& f)
+bool RadicalLODMeshLevel::findVertices(int a, int b, int& c, int& f)
 {
 	for (int i = 0; i<m_iFaceNum; i++)
 	{

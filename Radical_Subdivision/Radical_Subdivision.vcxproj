@@ -74,20 +74,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ASEfile.cpp" />
+    <ClCompile Include="ASELoader.cpp" />
     <ClCompile Include="GlutBase.cpp" />
-    <ClCompile Include="LOD.cpp" />
-    <ClCompile Include="LODLevel.cpp" />
+    <ClCompile Include="HalfEdgeBase.cpp" />
+    <ClCompile Include="LoopLOD.cpp" />
+    <ClCompile Include="LoopLODLevel.cpp" />
+    <ClCompile Include="RadicalLOD.cpp" />
+    <ClCompile Include="LODBase.cpp" />
+    <ClCompile Include="RadicalLODLevel.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PLYLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="ASEfile.h" />
+    <ClInclude Include="ASELoader.h" />
     <ClInclude Include="data_struct.h" />
     <ClInclude Include="functions.h" />
     <ClInclude Include="GlutBase.h" />
-    <ClInclude Include="LOD.h" />
-    <ClInclude Include="LODLevel.h" />
+    <ClInclude Include="HalfEdgeBase.h" />
+    <ClInclude Include="LoopLOD.h" />
+    <ClInclude Include="LoopLODLevel.h" />
+    <ClInclude Include="RadicalLOD.h" />
+    <ClInclude Include="LODBase.h" />
+    <ClInclude Include="RadicalLODLevel.h" />
     <ClInclude Include="pair.h" />
     <ClInclude Include="PLYLoader.h" />
   </ItemGroup>

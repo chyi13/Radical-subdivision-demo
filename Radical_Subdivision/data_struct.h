@@ -90,19 +90,7 @@ public:
 };
 
 
-/////////////////////////////////////////////////////////////////////////
-//
-//				error vertex
-//
-class LOD_ERROR
-{
-public:
-	int vertexIndex;				// original vertex index
-	VERTEX point;
 
-	float errXYZ[3];				// error 
-	int faceVertex[3];				// three vertex around the error vertex
-};
 /////////////////////////////////////////////////////////////////////////
 #include <math.h>
 static void minus(VERTEX &a, VERTEX b)
