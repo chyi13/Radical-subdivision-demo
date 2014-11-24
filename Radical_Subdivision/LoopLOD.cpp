@@ -3,6 +3,7 @@
 
 LoopLOD::LoopLOD(void)
 {
+	buildRecover = false;
 }
 
 
@@ -62,8 +63,8 @@ void LoopLOD::subdivision()
 
 				v1 = m_pFace[iCurFace].vertIndex[i];
 				v2 = m_pFace[iCurFace].vertIndex[(i+1)%3];
-				f1 = hf_findThirdVert(v2,v1);
-				f2 = m_pFace[iCurFace].vertIndex[(i+2)%3];
+				f1 = m_pFace[iCurFace].vertIndex[(i+2)%3];
+				f2 = hf_findThirdVert(v2,v1);
 
 				// new vert position
 				pNewVert[iCurVert].index = iCurVert;
@@ -239,6 +240,7 @@ void LoopLOD::subdivision()
 	//
 	m_iVertNum = iNewVertNum;
 	m_iFaceNum = iNewFaceNum;
+
 	free(m_pVert);
 	m_pVert = pNewVert;
 	free(m_pFace);
@@ -301,7 +303,7 @@ void LoopLOD::render()
 {
 	if (mSubLevel >0)
 	{
-		LoopLODLevel *plod = &m_lod;
+		LoopLODLevel *plod = &m_LOD;
 
 		// find the right level
 		int level = 0;
@@ -402,7 +404,7 @@ void LoopLOD::render()
 
 void LoopLOD::buildAllLevels()
 {
-	LoopLODLevel* p = &m_lod;
+	LoopLODLevel* p = &m_LOD;
 	p->initLL(m_iVertNum,m_pVert,m_iFaceNum,m_pFace);
 	strcpy(p->m_sLODName, m_sFilename);
 
@@ -422,6 +424,32 @@ void LoopLOD::buildAllLevels()
 
 bool LoopLOD::recoverAllLevels()
 {
+	if (buildRecover)
+	{
+		printf("Error: Already built!\n\r");
+		return false;
+	}
+	else	// if the recover sequence has not been built. then lodMesh is initialized by the coarest lodlevel
+	{
+		printf("Recovering from files...\n");
+
+		LoopLODLevel* p = &m_LOD;
+		while(p->next) p = p->next;
+
+		LoopLODMeshLevel* mp = &m_LODMesh;
+		mp->initLL(p->m_iVertNum, p->m_pVert, p->m_iFaceNum, p->m_pFace);	// initialize the first level
+		mp->level = p->level;
+		strcpy(mp->m_sLODName, p->m_sLODName);
+
+		while (mp->loopReverseSubdivide())
+		{
+			mp = mp->next;
+		}
+		printf("Recovery success!\n");
+		printf("Compressed model has been generated!\n");
+		
+		buildRecover = true;
+	}
 	return true;
 }
 

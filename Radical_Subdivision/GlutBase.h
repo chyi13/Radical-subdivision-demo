@@ -20,4 +20,6 @@ void mouse(int btn, int state, int x, int y);
 
 void mousemove(int x, int y);
 
+extern LODBase* g_LOD;
+
 #endif

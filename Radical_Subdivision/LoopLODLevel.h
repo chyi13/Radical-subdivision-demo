@@ -56,5 +56,23 @@ public:
 	char m_sLODName[255];			// lod name
 };
 
+class LoopLODMeshLevel : public LoopLODLevel
+{
+public:
+	LoopLODMeshLevel();
+	bool initLL(int t_iVertNum, LOD_VERTEX* pVert, int t_iFaceNum, LOD_FACE* pFace);
+	bool init(int t_iVNum, int t_iFNum);
+
+	bool loopReverseSubdivide();
+	bool saveLevelToFile(LoopLODMeshLevel*);
+
+	bool findErrVert(int a, int b, float* err);
+	bool findVertices(int a, int b, int& c, int& f);
+
+	int level;
+	int maxLevel;
+	LoopLODMeshLevel *next, *prev;
+};
+
 #endif
 

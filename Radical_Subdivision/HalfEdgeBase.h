@@ -36,7 +36,7 @@ public:
 	int hf_findThirdVert(int ia,int ib);	// ia ib 之外的第三个顶点
 	int hf_findPairThirdVert(int ia, int ib);
 
-	int HalfEdgeBase::findIndex(int a,int b,int* va,int* vb,int len);	// check if edge<a, b> is in set <va, vb> which has 
+	int findIndex(int a,int b,int* va,int* vb,int len);	// check if edge<a, b> is in set <va, vb> which has 
 																		// length of len.
 };
 

@@ -19,7 +19,9 @@ public:
 	virtual void render();		// render stuff
 
 private:
-	LoopLODLevel m_lod;
+	LoopLODLevel m_LOD;
+	LoopLODMeshLevel m_LODMesh;
+	bool buildRecover;
 };
 
 #endif

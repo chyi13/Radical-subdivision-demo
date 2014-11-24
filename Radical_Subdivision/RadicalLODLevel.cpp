@@ -540,7 +540,7 @@ RadicalLODLevel::~RadicalLODLevel(void)
 {
 }
 
-////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////
 // LODMeshLevel
 
 RadicalLODMeshLevel::RadicalLODMeshLevel()
@@ -620,6 +620,8 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 
 	next = new RadicalLODMeshLevel();
 	next->level = level-1;
+	strcpy(next->m_sLODName, m_sLODName);
+
 	int t_iNewVertNum = m_iVertNum + m_iFaceNum;
 	int t_iNewFaceNum = m_iFaceNum *3;
 	int t_iCurVert;
@@ -627,14 +629,13 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 	if (!(next->init(t_iNewVertNum, t_iNewFaceNum)) )// initialize next lod mesh
 		return false;
 
-	strcpy(next->m_sLODName, m_sLODName);
 	// step 111111111111111
 	// copy vertex to the new Vertex space
 	for (t_iCurVert = 0; t_iCurVert<m_iVertNum; t_iCurVert++)
 	{
 		next->m_pVert[t_iCurVert] = m_pVert[t_iCurVert];
 	}
-	printf("step 1 completed\n");
+	printf("Recovery: step 1 completed\n");
 
 	// step 22222222222222
 	// update every face
@@ -665,13 +666,13 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 		if (findErrVert(a, b, c, t_fErr))		// check if we have saved the error difference
 		{
 			next->m_pVert[t_iCurVert].point.x += t_fErr[0];
-			next->m_pVert[t_iCurVert].point.x += t_fErr[1];
-			next->m_pVert[t_iCurVert].point.x += t_fErr[2];
+			next->m_pVert[t_iCurVert].point.y += t_fErr[1];
+			next->m_pVert[t_iCurVert].point.z += t_fErr[2];
 		}
 
 		t_iCurVert++;
 	}
-	printf("step 2 completed\n");
+	printf("Recovery: step 2 completed\n");
 
 	// step 333333333333
 	// create half edge
@@ -735,39 +736,39 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 		}
 
 	}
-	printf("step 3 completed\n");
+	printf("Recovery: step 3 completed\n");
 
 	//
 	// step 44444444444
 	// update vertices position
-	for (int i = 0; i<m_iVertNum; i++)
-	{
-		//////////////////////////////////////////
-		//
-		//	V = (1-an)v + an/n (sigma(vi))
-		//	
-		//	an = (4-2cos(2pi/n))/9
-		//
-		/////////////////////////////////////////
+	//for (int i = 0; i<m_iVertNum; i++)
+	//{
+	//	//////////////////////////////////////////
+	//	//
+	//	//	V = (1-an)v + an/n (sigma(vi))
+	//	//	
+	//	//	an = (4-2cos(2pi/n))/9
+	//	//
+	//	/////////////////////////////////////////
 
-		float an = 0.f;
-		float sigma[3] = {0};
-		int N = m_pVert[i].valence;
+	//	float an = 0.f;
+	//	float sigma[3] = {0};
+	//	int N = m_pVert[i].valence;
 
-		for (int j = 0; j<N; j++)
-		{
-			sigma[0] += m_pVert[m_pVert[i].adj[j]].point.x;
-			sigma[1] += m_pVert[m_pVert[i].adj[j]].point.y;
-			sigma[2] += m_pVert[m_pVert[i].adj[j]].point.z;
-		}
+	//	for (int j = 0; j<N; j++)
+	//	{
+	//		sigma[0] += m_pVert[m_pVert[i].adj[j]].point.x;
+	//		sigma[1] += m_pVert[m_pVert[i].adj[j]].point.y;
+	//		sigma[2] += m_pVert[m_pVert[i].adj[j]].point.z;
+	//	}
 
-		an = (4.0 - 2*cos(2*PI/N))/9;
+	//	an = (4.0 - 2*cos(2*PI/N))/9;
 
-		next->m_pVert[i].point.x = (1-an)*m_pVert[i].point.x + an/N*sigma[0];
-		next->m_pVert[i].point.y = (1-an)*m_pVert[i].point.y + an/N*sigma[1];
-		next->m_pVert[i].point.z = (1-an)*m_pVert[i].point.z + an/N*sigma[2];
+	//	next->m_pVert[i].point.x = (1-an)*m_pVert[i].point.x + an/N*sigma[0];
+	//	next->m_pVert[i].point.y = (1-an)*m_pVert[i].point.y + an/N*sigma[1];
+	//	next->m_pVert[i].point.z = (1-an)*m_pVert[i].point.z + an/N*sigma[2];
 
-	}
+	//}
 
 	// 444444444444444444444
 	// compute normals and valence
@@ -841,17 +842,6 @@ bool RadicalLODMeshLevel::findErrVert(int a, int b, int c, float* err)
 		}
 	}
 	return false;
-}
-
-int RadicalLODMeshLevel::findIndex(int a,int b,int* va,int* vb,int len)
-{
-	for (int i = 0; i<len; i++)
-	{
-		if ( ((va[i] == a)&&(vb[i] == b)) ||
-			((va[i] == b)&&(vb[i] == a)))
-			return i;
-	}
-	return -1; // cannot find edge<a,b>
 }
 
 bool RadicalLODMeshLevel::findVertices(int a, int b, int& c, int& f)

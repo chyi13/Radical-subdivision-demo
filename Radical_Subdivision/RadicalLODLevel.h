@@ -70,7 +70,6 @@ public:
 	bool saveLevelToFile(RadicalLODMeshLevel*);
 
 	bool findErrVert(int a, int b, int c, float* err);
-	int findIndex(int a,int b,int* va,int* vb,int len);
 	bool findVertices(int a, int b, int& c, int& f);
 
 	int level;

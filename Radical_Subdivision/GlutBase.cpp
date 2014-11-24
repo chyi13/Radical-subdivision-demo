@@ -7,8 +7,6 @@ float mo[16] = { 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 };
 int width, height;
 float scale_v[3] ={1.0f,1.0f,1.0f};
 
-LODBase* m_LOD;
-
 void initGL()
 {
 	glClearColor(0.75f,0.75f,0.75f,1.f);
@@ -28,6 +26,7 @@ void initGL()
 	glEnable(GL_LIGHT0);
 
 	width = 800 ; height = 600;
+
 }
 
 void display()
@@ -51,7 +50,7 @@ void display()
 		//renderAse();
 		
 		//mloader.render();
-		m_LOD->render();
+		g_LOD->render();
 	}
 	glPopMatrix();
 
@@ -107,19 +106,19 @@ void keyboard(unsigned char key, int x, int y)
 		glutFullScreen();
 		break;
 	case 'r':
-		m_LOD->subdivision();
+		g_LOD->subdivision();
 		break;
 	case 'w':
-		m_LOD->setWired();
+		g_LOD->setWired();
 		break;
 	case 'b':
-		m_LOD->nextLevel();
+		g_LOD->nextLevel();
 		break;
 	case 'u':
-		m_LOD->prevLevel();
+		g_LOD->prevLevel();
 		break;
 	case 's':
-		m_LOD->recoverAllLevels();
+		g_LOD->recoverAllLevels();
 		break;
 	default:
 		break;
