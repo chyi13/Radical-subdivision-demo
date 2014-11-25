@@ -10,7 +10,7 @@ void init()
 
 	g_LOD = new LoopLOD();
 
-	if (!g_LOD->loadFromFile("ball-10.ase"))//"bun_zipper_res2.ase"))
+	if (!g_LOD->loadFromFile("bunny.ply"))//"bun_zipper_res2.ase"))
 	{
 		printf("File not found!\n");
 		return;

@@ -158,9 +158,9 @@ void RadicalLOD::subdivision()
 		//				
 
 		// save new VERTEX
-		pNewVert[iCurVert].point.x = (m_pVert[m_pFace[i].vertIndex[0]].point.x+m_pVert[m_pFace[i].vertIndex[1]].point.x+m_pVert[m_pFace[i].vertIndex[2]].point.x)/3;
-		pNewVert[iCurVert].point.y = (m_pVert[m_pFace[i].vertIndex[0]].point.y+m_pVert[m_pFace[i].vertIndex[1]].point.y+m_pVert[m_pFace[i].vertIndex[2]].point.y)/3;
-		pNewVert[iCurVert].point.z = (m_pVert[m_pFace[i].vertIndex[0]].point.z+m_pVert[m_pFace[i].vertIndex[1]].point.z+m_pVert[m_pFace[i].vertIndex[2]].point.z)/3;
+		pNewVert[iCurVert].point.x = float(m_pVert[m_pFace[i].vertIndex[0]].point.x+m_pVert[m_pFace[i].vertIndex[1]].point.x+m_pVert[m_pFace[i].vertIndex[2]].point.x)/3;
+		pNewVert[iCurVert].point.y = float(m_pVert[m_pFace[i].vertIndex[0]].point.y+m_pVert[m_pFace[i].vertIndex[1]].point.y+m_pVert[m_pFace[i].vertIndex[2]].point.y)/3;
+		pNewVert[iCurVert].point.z = float(m_pVert[m_pFace[i].vertIndex[0]].point.z+m_pVert[m_pFace[i].vertIndex[1]].point.z+m_pVert[m_pFace[i].vertIndex[2]].point.z)/3;
 		pNewVert[iCurVert].index = iCurVert;
 		pNewVert[iCurVert].valence = 0;
 		pNewVert[iCurVert].normal.x = pNewVert[iCurVert].normal.y = pNewVert[iCurVert].normal.z = 0;
@@ -173,11 +173,8 @@ void RadicalLOD::subdivision()
 	// step 333333333333
 	// create half edge
 	createHalfEdge();
-
 	printf("Creating hf completed\n");
-	printf("Edges %d\n",edgemap.size()/2);
-
-	printf("v-e+f: %d\n", m_iVertNum - edgemap.size()/2 + m_iFaceNum );
+	
 	// (2)find face
 	// mark subdivided edge
 	// traverse all three edge
@@ -212,7 +209,7 @@ void RadicalLOD::subdivision()
 				int c = hf_findThirdVert(v1,v2);
 				int d = hf_findThirdVert(v2,v1);
 				int L = hf_findFaceVert(v1,v2);
-				int R = hf_findPairVert(v1,v2);
+				int R = hf_findFaceVert(v2,v1);
 
 				// Face 1
 				pNewFace[tempFaceCount].vertIndex[0] = v1;

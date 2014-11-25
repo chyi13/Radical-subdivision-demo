@@ -134,6 +134,7 @@ void ASELoader::print()
 			fprintf(fw,"face   %d %d %d %d \n",it,temp->face_list[it].index[0],temp->face_list[it].index[1],temp->face_list[it].index[2]);
 		temp=temp->next;
 	}
+	fclose(fw);
 }
 void ASELoader::centralize()
 {
@@ -166,19 +167,20 @@ void ASELoader::centralize()
 	midX=(maxX+minX)/2;
 	midY=(maxY+minY)/2;
 	midZ=(maxZ+minZ)/2;
-	
+
+	float scaleCoef = 30./(maxX+ maxY+ maxZ);
+
 	p=head->head;
 	while(p!=NULL)
 	{
 		for (i=0;i<p->vertex_num;i++)
 		{
-			p->vertex_list[i].x-=midX;
-			p->vertex_list[i].y-=midY;
-			p->vertex_list[i].z-=midZ;
+			p->vertex_list[i].x = scaleCoef* (p->vertex_list[i].x - midX);
+			p->vertex_list[i].y = scaleCoef* (p->vertex_list[i].y - midY);
+			p->vertex_list[i].z = scaleCoef* (p->vertex_list[i].z - midZ);
 		}
 		p=p->next;
 	}
-
 }
 
 void ASELoader::getRealName(const char* fn)

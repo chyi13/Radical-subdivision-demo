@@ -79,9 +79,9 @@ bool PLYLoader::loadfile(const char* filename)
 		for (i = 0; i<ply->vertex_num; i++)
 		{
 			fscanf(file, "%f %f %f", &x, &y, &z);
-			ply->vertex_list[i].x = x * 100.f;
-			ply->vertex_list[i].y = y * 100.f;
-			ply->vertex_list[i].z = z * 100.f;
+			ply->vertex_list[i].x = x;
+			ply->vertex_list[i].y = y;
+			ply->vertex_list[i].z = z;
 		}
 	}
 	int count, a, b, c;
@@ -142,10 +142,26 @@ void PLYLoader::centralize()
 	float midY = (maxY + minY)/2;
 	float midZ = (maxZ + minZ)/2;
 
+	float scaleCoef = 30./(maxX - minX + maxY - minY + maxZ - minZ);
+
 	for (i = 0; i<ply->vertex_num; i++)
 	{
-		ply->vertex_list[i].x -= midX;
-		ply->vertex_list[i].y -= midY;
-		ply->vertex_list[i].z -= midZ;
+		ply->vertex_list[i].x = scaleCoef* (ply->vertex_list[i].x - midX);
+		ply->vertex_list[i].y = scaleCoef* (ply->vertex_list[i].y - midY);
+		ply->vertex_list[i].z = scaleCoef* (ply->vertex_list[i].z - midZ);
 	}
+}
+
+void PLYLoader::print()
+{
+	FILE* fw;
+	fw=fopen("1.txt","w");
+	PLY_OBJECT plyobj = getObject();
+	int it;
+	for (it=0;it<plyobj.vertex_num;it++)
+		fprintf(fw,"vertex %d %f %f %f \n",it,plyobj.vertex_list[it].x,plyobj.vertex_list[it].y,plyobj.vertex_list[it].z);
+	for (it=0;it<plyobj.face_num;it++)
+		fprintf(fw,"face   %d %d %d %d \n",it,plyobj.face_list[it].index[0],plyobj.face_list[it].index[1],plyobj.face_list[it].index[2]);
+
+	fclose(fw);
 }

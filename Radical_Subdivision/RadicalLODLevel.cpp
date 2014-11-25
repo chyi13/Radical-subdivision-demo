@@ -212,9 +212,9 @@ bool RadicalLODLevel::predict(RadicalLODLevel* nextLOD)
 			nextLOD->m_pError[errorIndex].faceVertex[2] = abcVertices[2];
 
 			float nx,ny,nz;			// new vertex position
-			nx = float(m_pVert[abcVertices[0]].point.x + m_pVert[abcVertices[1]].point.x+m_pVert[abcVertices[2]].point.x)/3;
-			ny = float(m_pVert[abcVertices[0]].point.y + m_pVert[abcVertices[1]].point.y+m_pVert[abcVertices[2]].point.y)/3;
-			nz = float(m_pVert[abcVertices[0]].point.z + m_pVert[abcVertices[1]].point.z+m_pVert[abcVertices[2]].point.z)/3;
+			nx = float(m_pVert[abcVertices[0]].point.x+ m_pVert[abcVertices[1]].point.x+ m_pVert[abcVertices[2]].point.x)/3;
+			ny = float(m_pVert[abcVertices[0]].point.y+ m_pVert[abcVertices[1]].point.y+ m_pVert[abcVertices[2]].point.y)/3;
+			nz = float(m_pVert[abcVertices[0]].point.z+ m_pVert[abcVertices[1]].point.z+ m_pVert[abcVertices[2]].point.z)/3;
 
 			float ex,ey,ez;			// error = origin - new
 			ex = m_pVert[i].point.x - nx;
@@ -649,9 +649,9 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 		//        / d \
 		//      b/_____\c
 		//				
-		next->m_pVert[t_iCurVert].point.x = float(m_pVert[m_pFace[i].vertIndex[0]].point.x+m_pVert[m_pFace[i].vertIndex[1]].point.x+m_pVert[m_pFace[i].vertIndex[2]].point.x)/3;
-		next->m_pVert[t_iCurVert].point.y = float(m_pVert[m_pFace[i].vertIndex[0]].point.y+m_pVert[m_pFace[i].vertIndex[1]].point.y+m_pVert[m_pFace[i].vertIndex[2]].point.y)/3;
-		next->m_pVert[t_iCurVert].point.z = float(m_pVert[m_pFace[i].vertIndex[0]].point.z+m_pVert[m_pFace[i].vertIndex[1]].point.z+m_pVert[m_pFace[i].vertIndex[2]].point.z)/3;
+		next->m_pVert[t_iCurVert].point.x = float(m_pVert[m_pFace[i].vertIndex[0]].point.x+ m_pVert[m_pFace[i].vertIndex[1]].point.x+ m_pVert[m_pFace[i].vertIndex[2]].point.x)/3;
+		next->m_pVert[t_iCurVert].point.y = float(m_pVert[m_pFace[i].vertIndex[0]].point.y+ m_pVert[m_pFace[i].vertIndex[1]].point.y+ m_pVert[m_pFace[i].vertIndex[2]].point.y)/3;
+		next->m_pVert[t_iCurVert].point.z = float(m_pVert[m_pFace[i].vertIndex[0]].point.z+ m_pVert[m_pFace[i].vertIndex[1]].point.z+ m_pVert[m_pFace[i].vertIndex[2]].point.z)/3;
 		next->m_pVert[t_iCurVert].index = t_iCurVert;
 		next->m_pVert[t_iCurVert].valence = 0;
 		next->m_pVert[t_iCurVert].normal.x = next->m_pVert[t_iCurVert].normal.y = next->m_pVert[t_iCurVert].normal.z = 0;

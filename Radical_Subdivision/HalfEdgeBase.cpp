@@ -15,6 +15,8 @@ void HalfEdgeBase::createHalfEdge()
 	int numOfVertices=0;
 	int numOfFaces=0;
 
+	edgemap.clear();
+
 	numOfVertices = m_iVertNum;
 	numOfFaces = m_iFaceNum;
 

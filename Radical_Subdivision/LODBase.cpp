@@ -115,7 +115,7 @@ bool LODBase::load_ply_file(const char* filename)
 	m_pVert	   = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*m_iVertNum);
 	m_pFace	   = (LOD_FACE*)  malloc(sizeof(LOD_FACE)*m_iFaceNum);
 
-	//	printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
+		printf("vnum = %d,fnum = %d\n",m_iVertNum,m_iFaceNum);
 	int i;
 	for (i=0;i<m_iVertNum;i++)
 	{
