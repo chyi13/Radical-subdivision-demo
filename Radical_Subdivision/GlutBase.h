@@ -5,6 +5,7 @@
 #include <GL/glut.h>
 #include "RadicalLOD.h"
 #include "LoopLOD.h"
+#include "RingLOD.h"
 
 void initGL();
 

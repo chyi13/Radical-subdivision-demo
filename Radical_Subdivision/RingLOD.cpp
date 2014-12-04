@@ -1,17 +1,16 @@
-#include "LoopLOD.h"
+#include "RingLOD.h"
 
 
-LoopLOD::LoopLOD(void)
+RingLOD::RingLOD(void)
 {
 	buildRecover = false;
 }
 
 
-LoopLOD::~LoopLOD(void)
+RingLOD::~RingLOD(void)
 {
 }
-
-void LoopLOD::subdivision()
+void RingLOD::subdivision()
 {
 	LOD_VERTEX *pNewVert;			// new vertex
 	LOD_FACE   *pNewFace;			// new face
@@ -255,11 +254,366 @@ void LoopLOD::subdivision()
 
 	m_iMaxLevel++;
 }
+void RingLOD::subdivision2()
+{
+	LOD_VERTEX* t_pNewVert;
+	LOD_FACE* t_pNewFace;
+	int *va,*vb;
 
-bool LoopLOD::saveToPly()
+	int t_iNewVertNum = m_iVertNum * 4;
+	int t_iNewFaceNum = m_iFaceNum * 4;
+
+	t_pNewVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX) * t_iNewVertNum);
+	t_pNewFace = (LOD_FACE *) malloc(sizeof(LOD_FACE)* t_iNewFaceNum);
+	va = new int[t_iNewVertNum];
+	vb = new int[t_iNewVertNum];
+
+	// step 111111111111111111111111111111
+	int iCurVert;
+
+	for (iCurVert = 0; iCurVert<m_iVertNum; iCurVert++)
+	{
+		t_pNewVert[iCurVert].index = iCurVert;
+		t_pNewVert[iCurVert].point.x = m_pVert[iCurVert].point.x;
+		t_pNewVert[iCurVert].point.y = m_pVert[iCurVert].point.y;
+		t_pNewVert[iCurVert].point.z = m_pVert[iCurVert].point.z;
+		t_pNewVert[iCurVert].valence = 0;
+		t_pNewVert[iCurVert].normal.x = t_pNewVert[iCurVert].normal.y = t_pNewVert[iCurVert].normal.z = 0;
+	}
+
+	// step 1212121212121212
+	createHalfEdge();
+
+	int v1, v2, e1, e2, e3, e4, f1, f2, newVert[3];
+	float w = 1.0/16.0;
+	for (int i = 0; i< m_iFaceNum; i++)
+	{
+		for (int j = 0; j<3; j++)
+		{
+			newVert[j] = findIndex(m_pFace[i].vertIndex[j],m_pFace[i].vertIndex[(j+1)%3],va,vb,iCurVert-m_iVertNum);
+			// step 2222222222222222222222222
+			if (newVert[j] == -1)
+			{
+				//   e1___f1___e2
+				//     \  /\  /
+				//    v1\/o \/v2
+				//      /\  /\
+				//   e4/__\/__\e3
+				//        f2
+
+				v1 = m_pFace[i].vertIndex[j];
+				v2 = m_pFace[i].vertIndex[(j+1)%3];
+
+				f1 = hf_findThirdVert(v1,v2);
+				f2 = hf_findThirdVert(v2,v1);
+
+				e1 = hf_findThirdVert(v1,f1);
+				e2 = hf_findThirdVert(f1,v2);
+				e3 = hf_findThirdVert(v2,f2);
+				e4 = hf_findThirdVert(f2,v1);
+
+				t_pNewVert[iCurVert].index = iCurVert;
+				t_pNewVert[iCurVert].point.x = 8*w* (m_pVert[v1].point.x + m_pVert[v2].point.x)
+					+ 2*w* (m_pVert[f1].point.x + m_pVert[f2].point.x)
+					- w* (m_pVert[e1].point.x + m_pVert[e2].point.x + m_pVert[e3].point.x + m_pVert[e4].point.x);
+				t_pNewVert[iCurVert].point.y = 8*w* (m_pVert[v1].point.y + m_pVert[v2].point.y)
+					+ 2*w* (m_pVert[f1].point.y + m_pVert[f2].point.y)
+					- w* (m_pVert[e1].point.y + m_pVert[e2].point.y + m_pVert[e3].point.y + m_pVert[e4].point.y);
+				t_pNewVert[iCurVert].point.z = 8*w* (m_pVert[v1].point.z + m_pVert[v2].point.z)
+					+ 2*w* (m_pVert[f1].point.z + m_pVert[f2].point.z)
+					- w* (m_pVert[e1].point.z + m_pVert[e2].point.z + m_pVert[e3].point.z + m_pVert[e4].point.z);
+				t_pNewVert[iCurVert].even = UNKNOWN;
+				t_pNewVert[iCurVert].valence = 0;
+				t_pNewVert[iCurVert].normal.x = t_pNewVert[iCurVert].normal.y = t_pNewVert[iCurVert].normal.z = 0;
+
+				va[iCurVert - m_iVertNum] = v1;
+				vb[iCurVert - m_iVertNum] = v2;
+				newVert[j] = iCurVert;
+
+				iCurVert++;
+			}
+			else
+			{
+				newVert[j]+= m_iVertNum;
+			}
+		}
+
+		// add faces
+		//          i0
+		//          /\
+		//       n0/__\n2
+		//        /\  /\   
+		//     i1/__\/__\ i2
+		//          n1
+
+		// face 1
+		t_pNewFace[i*4].vertIndex[0] = m_pFace[i].vertIndex[0];
+		t_pNewFace[i*4].vertIndex[1] = newVert[0];
+		t_pNewFace[i*4].vertIndex[2] = newVert[2];
+		t_pNewFace[i*4].normal.x = t_pNewFace[i*4].normal.y 
+			 = t_pNewFace[i*4].normal.z = 0;
+		// face 2
+		t_pNewFace[i*4+1].vertIndex[0] = m_pFace[i].vertIndex[1];
+		t_pNewFace[i*4+1].vertIndex[1] = newVert[1];
+		t_pNewFace[i*4+1].vertIndex[2] = newVert[0];
+		t_pNewFace[i*4+1].normal.x = t_pNewFace[i*4+1].normal.y 
+			 = t_pNewFace[i*4+1].normal.z = 0;
+		// face 3
+		t_pNewFace[i*4+2].vertIndex[0] = m_pFace[i].vertIndex[2];
+		t_pNewFace[i*4+2].vertIndex[1] = newVert[2];
+		t_pNewFace[i*4+2].vertIndex[2] = newVert[1];
+		t_pNewFace[i*4+2].normal.x = t_pNewFace[i*4+2].normal.y 
+			 = t_pNewFace[i*4+2].normal.z = 0;
+		// face 4
+		t_pNewFace[i*4+3].vertIndex[0] = newVert[0];
+		t_pNewFace[i*4+3].vertIndex[1] = newVert[1];
+		t_pNewFace[i*4+3].vertIndex[2] = newVert[2];
+		t_pNewFace[i*4+3].normal.x = t_pNewFace[i*4+3].normal.y 
+			 = t_pNewFace[i*4+3].normal.z = 0;
+	}
+
+	// step 33333333333333333333333
+	// ?? update original vertices
+	//int ver1, ver2, find,nearpoint[100];
+	//float mid,kb,midx,midy,midz;
+	//for (int iC = 0; iC<m_iVertNum; iC++)
+	//{
+	//	int i=0, nearnum=0, find0=0;
+	//	for(int iCurface=0;iCurface<m_iFaceNum;iCurface++){ //for1
+	//		if (m_pFace[iCurface].vertIndex[0]==iC)
+	//		{ 
+	//			ver1=m_pFace[iCurface].vertIndex[1];
+	//			ver2=m_pFace[iCurface].vertIndex[2];
+	//			find0=1;
+	//		}
+	//		if (m_pFace[iCurface].vertIndex[1]==iC)
+	//		{
+	//			ver1=m_pFace[iCurface].vertIndex[2];
+	//			ver2=m_pFace[iCurface].vertIndex[0];
+	//			find0=1;
+	//		}
+	//		if (m_pFace[iCurface].vertIndex[2]==iC)
+	//		{ 
+	//			ver1=m_pFace[iCurface].vertIndex[0];
+	//			ver2=m_pFace[iCurface].vertIndex[1];
+	//			find0=1;
+	//		}
+	//		if (find0==1) //找到含有该顶点的面
+	//		{
+	//			find=0;
+	//			for (i=1;i<nearnum+1;i++)
+	//				if (nearpoint[i]==ver1)
+	//				{ 
+	//					find=1;   
+	//					break;  
+	//				}
+
+	//				if (find==0) 
+	//				{
+	//					nearnum++;
+	//					nearpoint[nearnum]=ver1; 
+	//				}
+	//				find=0;
+	//				for (i=1;i<nearnum+1;i++)
+	//					if (nearpoint[i]==ver2) 
+	//					{find=1;   break; }
+	//					if (find==0) { 
+	//						nearnum++;
+	//						nearpoint[nearnum]=ver2; }
+	//		} //end find0
+
+	//		find0=0;
+	//	} //end iface
+
+	//	nearpoint[0]=nearnum;  
+	//	if (nearnum==3) kb=3.0/16.0;
+	//	else {  mid= 3.0/8.0+1.0/4.0*cos(2*PI/nearnum);
+	//	kb=1.0/nearnum*(5.0/8.0-mid*mid);
+	//	}
+
+	//	midx=midy=midz=0.0;
+	//	for (i=1;i<=nearnum;i++)
+	//	{
+	//		midx += m_pVert[nearpoint[i]].point.x;
+	//		midy += m_pVert[nearpoint[i]].point.y;
+	//		midz += m_pVert[nearpoint[i]].point.z;
+	//	}
+
+	//	t_pNewVert[iC].point.x = (1.0-nearnum*kb)*m_pVert[iC].point.x + kb * midx;
+	//	t_pNewVert[iC].point.y = (1.0-nearnum*kb)*m_pVert[iC].point.y + kb * midy;
+	//	t_pNewVert[iC].point.z = (1.0-nearnum*kb)*m_pVert[iC].point.z + kb * midz;
+
+	//}
+
+	// step 4444444444444444
+	// copy and update data
+	t_iNewVertNum = iCurVert;
+	LOD_VERTEX *pTmpVert;	//顶点数组
+	pTmpVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*(t_iNewVertNum));
+	memcpy(pTmpVert,t_pNewVert,sizeof(LOD_VERTEX)*t_iNewVertNum);
+	free(t_pNewVert);
+	t_pNewVert = pTmpVert;
+
+	m_iVertNum = iCurVert;
+	m_iFaceNum = t_iNewFaceNum;
+
+	free(m_pVert);
+	m_pVert = t_pNewVert;
+	free(m_pFace);
+	m_pFace = t_pNewFace;
+
+	// step 555555555555555
+	computeNormals();
+
+	computeValence();
+
+	// step 666666666666666
+	saveToPly();
+
+	m_iMaxLevel++;
+}
+
+void RingLOD::subdivision1()
+{
+	LOD_VERTEX* t_pNewVert;
+	LOD_FACE* t_pNewFace;
+	int *va,*vb;
+
+	int t_iNewVertNum = m_iVertNum * 4 + m_iFaceNum;
+	int t_iNewFaceNum = m_iFaceNum * 6;
+
+	t_pNewVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX) * t_iNewVertNum);
+	t_pNewFace = (LOD_FACE *) malloc(sizeof(LOD_FACE)* t_iNewFaceNum);
+	va = new int[t_iNewVertNum];
+	vb = new int[t_iNewVertNum];
+
+	// step 111111111111111111111111111111
+	int iCurVert;
+
+	for (iCurVert = 0; iCurVert<m_iVertNum; iCurVert++)
+	{
+		t_pNewVert[iCurVert].index = iCurVert;
+		t_pNewVert[iCurVert].point.x = m_pVert[iCurVert].point.x;
+		t_pNewVert[iCurVert].point.y = m_pVert[iCurVert].point.y;
+		t_pNewVert[iCurVert].point.z = m_pVert[iCurVert].point.z;
+		t_pNewVert[iCurVert].valence = 0;
+		t_pNewVert[iCurVert].normal.x = t_pNewVert[iCurVert].normal.y = t_pNewVert[iCurVert].normal.z = 0;
+	}
+
+	// step 1212121212121212
+	createHalfEdge();
+
+	//
+	int v1, v2, a, b ,c, o, newVert[3];
+	for (int i = 0; i<m_iFaceNum; i++)
+	{
+		//				a
+		//			   / \
+		//		      0   2
+		//           /  o  \
+		//          b---1---c
+		//
+		//
+		a = m_pFace[i].vertIndex[0];
+		b = m_pFace[i].vertIndex[1];
+		c = m_pFace[i].vertIndex[2];
+
+		for (int j = 0; j<3; j++)
+		{	
+			// 1. edge vertex
+			newVert[j] = findIndex(m_pFace[i].vertIndex[j],m_pFace[i].vertIndex[(j+1)%3],va,vb,(iCurVert)-m_iVertNum);
+			if (newVert[j] == -1)
+			{
+				v1 = m_pFace[i].vertIndex[j];
+				v2 = m_pFace[i].vertIndex[(j+1)%3];
+				t_pNewVert[iCurVert].point.x = (m_pVert[v1].point.x + m_pVert[v2].point.x)/2;
+				t_pNewVert[iCurVert].point.y = (m_pVert[v1].point.y + m_pVert[v2].point.y)/2;
+				t_pNewVert[iCurVert].point.z = (m_pVert[v1].point.z + m_pVert[v2].point.z)/2;
+
+				t_pNewVert[iCurVert].valence = 0;
+				t_pNewVert[iCurVert].normal.x = t_pNewVert[iCurVert].normal.y = t_pNewVert[iCurVert].normal.z
+					= 0;
+
+				// mark subdivided edge
+				va[(iCurVert) - m_iVertNum] = v1;
+				vb[(iCurVert) - m_iVertNum] = v2;
+				newVert[j] = iCurVert;
+
+				++iCurVert;
+			}
+			else
+			{
+				newVert[j]+= m_iVertNum;
+			}
+		}
+
+		// 2. new vertex 'o' is in the center
+		t_pNewVert[iCurVert].point.x = (m_pVert[a].point.x + m_pVert[b].point.x + m_pVert[c].point.x)/3;
+		t_pNewVert[iCurVert].point.y = (m_pVert[a].point.y + m_pVert[b].point.y + m_pVert[c].point.y)/3;
+		t_pNewVert[iCurVert].point.z = (m_pVert[a].point.z + m_pVert[b].point.z + m_pVert[c].point.z)/3;
+		o = iCurVert;
+		++iCurVert;
+
+		// 3 add faces
+		// 1
+		t_pNewFace[i*6].vertIndex[0] = a;
+		t_pNewFace[i*6].vertIndex[1] = newVert[0];
+		t_pNewFace[i*6].vertIndex[2] = o;
+		// 2
+		t_pNewFace[i*6+1].vertIndex[0] = newVert[0];
+		t_pNewFace[i*6+1].vertIndex[1] = b;
+		t_pNewFace[i*6+1].vertIndex[2] = o;
+		// 3
+		t_pNewFace[i*6+2].vertIndex[0] = b;
+		t_pNewFace[i*6+2].vertIndex[1] = newVert[1];
+		t_pNewFace[i*6+2].vertIndex[2] = o;
+		// 4
+		t_pNewFace[i*6+3].vertIndex[0] = newVert[1];
+		t_pNewFace[i*6+3].vertIndex[1] = c;
+		t_pNewFace[i*6+3].vertIndex[2] = o;
+		// 5
+		t_pNewFace[i*6+4].vertIndex[0] = c;
+		t_pNewFace[i*6+4].vertIndex[1] = newVert[2];
+		t_pNewFace[i*6+4].vertIndex[2] = o;
+		// 6
+		t_pNewFace[i*6+5].vertIndex[0] = newVert[2];
+		t_pNewFace[i*6+5].vertIndex[1] = a;
+		t_pNewFace[i*6+5].vertIndex[2] = o;
+	}
+
+	// step 333333333
+	// copy data
+	t_iNewVertNum = iCurVert;
+	LOD_VERTEX *pTmpVert;	//顶点数组
+	pTmpVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*(t_iNewVertNum));
+	memcpy(pTmpVert,t_pNewVert,sizeof(LOD_VERTEX)*t_iNewVertNum);
+	free(t_pNewVert);
+	t_pNewVert = pTmpVert;
+
+	m_iVertNum = iCurVert;
+	m_iFaceNum = t_iNewFaceNum;
+
+	free(m_pVert);
+	m_pVert = t_pNewVert;
+	free(m_pFace);
+	m_pFace = t_pNewFace;
+
+	
+	// step 444444444
+	computeNormals();
+
+	computeValence();
+
+	// step 44444444
+	saveToPly();
+	m_iMaxLevel++;
+
+}
+
+bool RingLOD::saveToPly()
 {
 	char t_sFileN[255];
-	sprintf(t_sFileN, "./generate/%s_loop-%d.ply", m_sFilename, m_iMaxLevel);
+	sprintf(t_sFileN, "./generate/%s_ring-%d.ply", m_sFilename, m_iMaxLevel);
 
 	printf("%s\n", t_sFileN);
 
@@ -299,11 +653,11 @@ bool LoopLOD::saveToPly()
 	return true;
 }
 
-void LoopLOD::render()
+void RingLOD::render()
 {
 	if (mSubLevel >0)
 	{
-		LoopLODLevel *plod = &m_LOD;
+		RingLODLevel *plod = &m_LOD;
 
 		// find the right level
 		int level = 0;
@@ -402,9 +756,9 @@ void LoopLOD::render()
 	}
 }
 
-void LoopLOD::buildAllLevels()
+void RingLOD::buildAllLevels()
 {
-	LoopLODLevel* p = &m_LOD;
+	RingLODLevel* p = &m_LOD;
 	p->initLL(m_iVertNum,m_pVert,m_iFaceNum,m_pFace);
 	strcpy(p->m_sLODName, m_sFilename);
 
@@ -422,7 +776,7 @@ void LoopLOD::buildAllLevels()
 	printf("Total building time: %f\n",total_time);
 }
 
-bool LoopLOD::recoverAllLevels()
+bool RingLOD::recoverAllLevels()
 {
 	if (buildRecover)
 	{
@@ -433,15 +787,15 @@ bool LoopLOD::recoverAllLevels()
 	{
 		printf("Recovering from files...\n");
 
-		LoopLODLevel* p = &m_LOD;
+		RingLODLevel* p = &m_LOD;
 		while(p->next) p = p->next;
 
-		LoopLODMeshLevel* mp = &m_LODMesh;
+		RingLODMeshLevel* mp = &m_LODMesh;
 		mp->initLL(p->m_iVertNum, p->m_pVert, p->m_iFaceNum, p->m_pFace);	// initialize the first level
 		mp->level = p->level;
 		strcpy(mp->m_sLODName, p->m_sLODName);
 
-		while (mp->loopReverseSubdivide())
+		while (mp->ringReverseSubdivide())
 		{
 			mp = mp->next;
 		}
@@ -452,4 +806,3 @@ bool LoopLOD::recoverAllLevels()
 	}
 	return true;
 }
-

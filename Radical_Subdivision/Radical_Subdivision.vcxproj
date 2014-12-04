@@ -84,6 +84,8 @@
     <ClCompile Include="RadicalLODLevel.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="PLYLoader.cpp" />
+    <ClCompile Include="RingLOD.cpp" />
+    <ClCompile Include="RingLODLevel.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ASELoader.h" />
@@ -98,6 +100,8 @@
     <ClInclude Include="RadicalLODLevel.h" />
     <ClInclude Include="pair.h" />
     <ClInclude Include="PLYLoader.h" />
+    <ClInclude Include="RingLOD.h" />
+    <ClInclude Include="RingLODLevel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

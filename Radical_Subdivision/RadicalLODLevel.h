@@ -39,6 +39,7 @@ public:
 	bool findRadicalVert(int o,int e[]);	// 3.1 
 	bool findRadicalVert1(int o,int e[]);	// 3.1 
 	bool updateLOD(RadicalLODLevel* nextLOD);		// 4.update build next lod
+	bool updateLOD1(RadicalLODLevel* nextLOD);
 	bool saveErrorToFile(RadicalLODLevel* nextLOD); // 5.save error data to file
 	bool saveCurrentMesh(); // 6.final step: save current mesh to file
 

@@ -175,6 +175,8 @@ void RadicalLOD::subdivision()
 	createHalfEdge();
 	printf("Creating hf completed\n");
 	
+	printf("V - E + F = %d\n", m_iVertNum - edgemap.size()/2 + m_iFaceNum);
+
 	// (2)find face
 	// mark subdivided edge
 	// traverse all three edge

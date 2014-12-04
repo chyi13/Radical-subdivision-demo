@@ -10,7 +10,7 @@ float scale_v[3] ={1.0f,1.0f,1.0f};
 void initGL()
 {
 	glClearColor(0.75f,0.75f,0.75f,1.f);
-	glShadeModel(GL_FLAT);
+	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
 
 	glEnable(GL_DEPTH_TEST);					// open depth test

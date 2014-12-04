@@ -45,6 +45,12 @@
     <ClCompile Include="RadicalLODLevel.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="RingLOD.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="RingLODLevel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="data_struct.h">
@@ -81,6 +87,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="RadicalLODLevel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RingLOD.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="RingLODLevel.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

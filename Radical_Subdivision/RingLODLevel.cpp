@@ -1,17 +1,16 @@
-#include "LoopLODLevel.h"
+#include "RingLODLevel.h"
 
 
-LoopLODLevel::LoopLODLevel(void)
-{
-
-}
-
-
-LoopLODLevel::~LoopLODLevel(void)
+RingLODLevel::RingLODLevel(void)
 {
 }
 
-void LoopLODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFace)
+
+RingLODLevel::~RingLODLevel(void)
+{
+}
+
+void RingLODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFace)
 {
 	ext_time = 0;
 	level = 0;
@@ -28,13 +27,13 @@ void LoopLODLevel::initLL(int iVNum, LOD_VERTEX* pVert, int iFNum, LOD_FACE* pFa
 
 	for (int i=0; i<iFNum; i++)
 		m_pFace[i] = pFace[i];
-
+//??
 	computeNormals();
 
 	computeValence();
 }
 
-void LoopLODLevel::init(int tVNum, int tFNum, int tENum)
+void RingLODLevel::init(int tVNum, int tFNum, int tENum)
 {
 	ext_time = 0;
 	next = nullptr;
@@ -45,10 +44,10 @@ void LoopLODLevel::init(int tVNum, int tFNum, int tENum)
 
 	m_pVert = (LOD_VERTEX*)malloc(sizeof(LOD_VERTEX)*m_iVertNum);
 	m_pFace = (LOD_FACE*)  malloc(sizeof(LOD_FACE)*m_iFaceNum);
-	m_pError = (LoopLODError*)malloc(sizeof(LoopLODError)*m_iErrNum);		// Error data
+	m_pError = (RingLODError*)malloc(sizeof(RingLODError)*m_iErrNum);		// Error data
 }
 
-void LoopLODLevel::computeNormals()
+void RingLODLevel::computeNormals()
 {
 	int i,j;
 
@@ -81,7 +80,7 @@ void LoopLODLevel::computeNormals()
 	}
 }
 
-void LoopLODLevel::computeValence()
+void RingLODLevel::computeValence()
 {
 	// only for closed surface
 	int i,j;
@@ -101,7 +100,7 @@ void LoopLODLevel::computeValence()
 	}
 }
 
-bool LoopLODLevel::buildNextLevel()
+bool RingLODLevel::buildNextLevel()
 {
 	// 00000000000000000000000000
 	printf("\r\n------------------building level %d-------------------\n",level+1);
@@ -112,10 +111,10 @@ bool LoopLODLevel::buildNextLevel()
 
 	// 11111111111111111111111111
 	if(split()){
-
 		printf("Success! Split\n");
+
 		// 222222222222222222222222222222222 initialize
-		next = new LoopLODLevel();
+		next = new RingLODLevel();
 		next->level = level+1;
 		next->init(evenNum, m_iFaceNum/4, m_iVertNum - evenNum);
 		next->threshold = threshold;
@@ -174,7 +173,7 @@ bool LoopLODLevel::buildNextLevel()
 	return false;
 }
 
-bool LoopLODLevel::split()
+bool RingLODLevel::split()
 {
 	int i;
 	for (i = 0; i<m_iVertNum;i++)
@@ -186,25 +185,7 @@ bool LoopLODLevel::split()
 	return setEven(i);
 }
 
-bool LoopLODLevel::split1()
-{
-	int i;
-	evenNum = 0;
-	for (i = 0; i<m_iVertNum;i++)
-	{
-		if (m_pVert[i].valence != 6)
-		{
-			m_pVert[i].even = EVEN;
-			evenNum++;
-		}
-		else
-			m_pVert[i].even = ODD;
-	}
-	
-	return true;
-}
-
-bool LoopLODLevel::setEven(int index)
+bool RingLODLevel::setEven(int index)
 {
 	if (m_pVert[index].even == EVEN)
 		return true;
@@ -270,120 +251,148 @@ bool LoopLODLevel::setEven(int index)
 	return true;
 }
 
-bool LoopLODLevel::predict(LoopLODLevel *nextLOD)
+bool RingLODLevel::predict(RingLODLevel* nextLOD)
 {
-	////////////////////
-	//        f1
-	//        /\  
-	//    v1 /__\ v2
-	//       \  /
-	//        \/
+	///////////////////
+	//   e1___f1___e2
+	//     \  /\  /
+	//    v1\/__\/v2
+	//      /\  /\
+	//   e3/__\/__\e4
 	//        f2
-	//
-	int v1,v2,f1,f2;
-	float w = 1.0/ 8.0;		// loop subdivision coefficient
-	int errorIndex = 0;
+	int val[8];
+	int v1, v2, f1, f2, e1, e2, e3, e4;
+	float w = 1.0/16.0;
 
-	for (int i = 0; i < m_iVertNum; i++)
+	int errorIndex = 0;
+	for (int i = 0; i<m_iVertNum; i++)
 	{
-		if (m_pVert[i].even == ODD)			// 1.if the vertex is ODD then predict
+		if (m_pVert[i].even == ODD)
 		{
-			// find 4 Loop vertices
-			int val[4];
-			if (!findLoopVert(i,val))
+			// step 3.1
+			if (!findRingVert(i, val))
 			{
-				printf("Error: Predict-Cannot find 4 vertices!\n");
+				printf("Error: Cannot find Ring Vert!\n");
 				return false;
 			}
 			v1 = val[0];
 			v2 = val[1];
 			f1 = val[2];
 			f2 = val[3];
-
-			// calculate the difference
-			// the predicted vert should be:
-			// 8*w*(v1+v2) + 2*w*(f1+f2) - w*(e1+e2+e3+e4)
+			e1 = val[4];
+			e2 = val[5];
+			e3 = val[6];
+			e4 = val[7];
 
 			float ex, ey, ez;
-			ex = 3 * w * (m_pVert[v1].point.x + m_pVert[v2].point.x) + 1 * w * (m_pVert[f1].point.x + m_pVert[f2].point.x);
-			ey = 3 * w * (m_pVert[v1].point.y + m_pVert[v2].point.y) + 1 * w * (m_pVert[f1].point.y + m_pVert[f2].point.y);
-			ez = 3 * w * (m_pVert[v1].point.z + m_pVert[v2].point.z) + 1 * w * (m_pVert[f1].point.z + m_pVert[f2].point.z);
+			ex = 8*w *(m_pVert[v1].point.x + m_pVert[v2].point.x)
+				+ 2*w *(m_pVert[f1].point.x + m_pVert[f2].point.x)
+				- w* (m_pVert[e1].point.x + m_pVert[e2].point.x + m_pVert[e3].point.x + m_pVert[e4].point.x);
+			ey = 8*w *(m_pVert[v1].point.y + m_pVert[v2].point.y)
+				+ 2*w *(m_pVert[f1].point.y + m_pVert[f2].point.y)
+				- w* (m_pVert[e1].point.y + m_pVert[e2].point.y + m_pVert[e3].point.y + m_pVert[e4].point.y);
+			ez = 8*w *(m_pVert[v1].point.z + m_pVert[v2].point.z)
+				+ 2*w *(m_pVert[f1].point.z + m_pVert[f2].point.z)
+				- w* (m_pVert[e1].point.z + m_pVert[e2].point.z + m_pVert[e3].point.z + m_pVert[e4].point.z);
 
+		//	printf("%f %f %f\n", ex, ey, ez);
 			ex = m_pVert[i].point.x - ex;
 			ey = m_pVert[i].point.y - ey;
 			ez = m_pVert[i].point.z - ez;
-
-			// save the error information
-			nextLOD->m_pError[errorIndex].vertexIndex = i;//第k个error对应的顶点ID是i. 顶点ID是指原始网格的顶点INDEX
+			
+			nextLOD->m_pError[errorIndex].vertexIndex = i;
 			nextLOD->m_pError[errorIndex].errXYZ[0] = ex;
 			nextLOD->m_pError[errorIndex].errXYZ[1] = ey;
 			nextLOD->m_pError[errorIndex].errXYZ[2] = ez;
 
-			//此时将v1,v2在vert_id中的index保存下来作为误差的标识:
-			//(保存index是因其数字相对较小,因为顶点保存是以ID为序,故保存index也能唯一标识)
-			//思考:既然这里标识了误差,那么err_vert是否必要? 答案是肯定的.
 			nextLOD->m_pError[errorIndex].v1 = v1;
 			nextLOD->m_pError[errorIndex].v2 = v2;
+			nextLOD->m_pError[errorIndex].e1 = e1;
+			nextLOD->m_pError[errorIndex].e2 = e2;
+			nextLOD->m_pError[errorIndex].e3 = e3;
+			nextLOD->m_pError[errorIndex].e4 = e4;
+			nextLOD->m_pError[errorIndex].f1 = f1;
+			nextLOD->m_pError[errorIndex].f2 = f2;
 
-			errorIndex++;
+			++errorIndex;
 		}
 	}
 	nextLOD->m_iErrNum = errorIndex;
-
 	return true;
 }
 
-bool LoopLODLevel::findLoopVert(int o,int e[])
+bool RingLODLevel::findRingVert(int o,int e[])
 {
-	int k = 0,t[4];
-
-	//		e2
-	//	   /  \
-	//    t0   t1
-	//   /      \
-	//  e0-- o --e1
-	//   \      /
-	//    t2   t3
-	//     \  /
-	//      e3
-
-	for(int i= 0; i< m_iFaceNum; i++)
+	//
+	//    4___ 2___5
+	//     \  /\  /
+	//     0\/ o\/1 
+	//      /\  /\
+	//    6/__\/__\7
+	//         3
+	int k = 0;
+	for (int i = 0; i<m_iFaceNum; i++)
 	{
-		if (m_pFace[i].vertIndex[0] == o && 
-			m_pVert[m_pFace[i].vertIndex[1]].even == EVEN)
+		int a = m_pFace[i].vertIndex[0];
+		int b = m_pFace[i].vertIndex[1];
+		int c = m_pFace[i].vertIndex[2];
+
+		if (a == o && m_pVert[b].even == EVEN)
 		{
-			e[k] = m_pFace[i].vertIndex[1]; 
+			e[k] = b;
 			k++;
 		}
-		else if (m_pFace[i].vertIndex[1] == o && 
-			m_pVert[m_pFace[i].vertIndex[2]].even == EVEN)
+		else if (b == o && m_pVert[c].even == EVEN)
 		{
-			e[k] = m_pFace[i].vertIndex[2]; 
+			e[k] = c;
 			k++;
 		}
-		else if (m_pFace[i].vertIndex[2] == o && 
-			m_pVert[m_pFace[i].vertIndex[0]].even == EVEN)
+		else if (c == o && m_pVert[a].even == EVEN)
 		{
-			e[k] = m_pFace[i].vertIndex[0]; 
+			e[k] = a;
 			k++;
 		}
-		if(k>1)	break;
+		if (k>1) break;
 	}
 
-	//e[2]:
-	t[0] = hf_findThirdVert(e[0],o);
-	t[1] = hf_findThirdVert(o,e[1]);
-	e[2] = hf_findThirdVert(t[0],t[1]);
+	if (k == 0)
+		return false;
 
-	//e[3]:
-	t[3] = hf_findThirdVert(e[1],o);
-	t[2] = hf_findThirdVert(o,e[0]);
-	e[3] = hf_findThirdVert(t[3],t[2]);
+	// vert 2
+	int t[12];
+	t[0] = hf_findThirdVert(e[0], o);
+	t[1] = hf_findThirdVert(o, e[1]);
+	e[2] = hf_findThirdVert(t[0], t[1]);
+
+	// vert 3
+	t[2] = hf_findThirdVert(o, e[0]);
+	t[3] = hf_findThirdVert(e[1], o);
+	e[3] = hf_findThirdVert(t[3], t[2]);
+
+	// vert 4
+	t[4] = hf_findThirdVert(e[0], t[0]);
+	t[5] = hf_findThirdVert(t[0], e[2]);
+	e[4] = hf_findThirdVert(t[4], t[5]);
+
+	// vert 5
+	t[6] = hf_findThirdVert(e[2], t[1]);
+	t[7] = hf_findThirdVert(t[1], e[1]);
+	e[5] = hf_findThirdVert(t[6], t[7]);
+
+	// vert 6
+	t[8] = hf_findThirdVert(e[3], t[2]);
+	t[9] = hf_findThirdVert(t[2], e[0]);
+	e[6] = hf_findThirdVert(t[8], t[9]);
+
+	// vert 7
+	t[10] = hf_findThirdVert(e[1], t[3]);
+	t[11] = hf_findThirdVert(t[3], e[3]);
+	e[7] = hf_findThirdVert(t[10], t[11]);
 
 	return true;
 }
 
-bool LoopLODLevel::updateLOD(LoopLODLevel* nextLOD)
+bool RingLODLevel::updateLOD(RingLODLevel* nextLOD)
 {
 	// 1. update vertices
 	std::map<int,int> tempMap;			// <original id, current id>
@@ -402,7 +411,6 @@ bool LoopLODLevel::updateLOD(LoopLODLevel* nextLOD)
 			newVertex++;
 		}
 	}
-
 
 	// 2. update faces
 	int na, nb, nc;
@@ -438,12 +446,12 @@ bool LoopLODLevel::updateLOD(LoopLODLevel* nextLOD)
 	return true;
 }
 
-bool LoopLODLevel::saveErrorToFile(LoopLODLevel* nextLOD)
+bool RingLODLevel::saveErrorToFile(RingLODLevel* nextLOD)
 {
 	FILE* t_pFile;
 	char t_sFileN[255];
 
-	sprintf(t_sFileN, "./generate/%s_loop-%d.err", m_sLODName, nextLOD->level);
+	sprintf(t_sFileN, "./generate/%s_ring-%d.err", m_sLODName, nextLOD->level);
 	t_pFile = fopen(t_sFileN, "w");
 
 	if (t_pFile == nullptr)
@@ -459,9 +467,10 @@ bool LoopLODLevel::saveErrorToFile(LoopLODLevel* nextLOD)
 			|| abs(nextLOD->m_pError[i].errXYZ[1]) > threshold
 			|| abs(nextLOD->m_pError[i].errXYZ[2]) > threshold)
 		{
-			fprintf(t_pFile,"%d %f %f %f %d %d\n",nextLOD->m_pError[i].vertexIndex,
+			fprintf(t_pFile,"%d %f %f %f %d %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
 				nextLOD->m_pError[i].errXYZ[0], nextLOD->m_pError[i].errXYZ[1], nextLOD->m_pError[i].errXYZ[2],
-				nextLOD->m_pError[i].v1, nextLOD->m_pError[i].v2);
+				nextLOD->m_pError[i].v1, nextLOD->m_pError[i].v2, 
+				nextLOD->m_pError[i].e1, nextLOD->m_pError[i].e2);
 		}
 	}
 
@@ -469,43 +478,51 @@ bool LoopLODLevel::saveErrorToFile(LoopLODLevel* nextLOD)
 	return true;
 }
 
-bool LoopLODLevel::saveCurrentMesh()
+bool RingLODLevel::saveCurrentMesh()
 {
 	FILE* t_pFile;
 	char t_sFileN[255];
-	sprintf(t_sFileN, "./generate/%s_loop.cor", m_sLODName);
+	sprintf(t_sFileN, "./generate/%s_ring.cor", m_sLODName);
 
 	t_pFile = fopen(t_sFileN, "w");
 
 	// 0. vert num, face num
-	fprintf(t_pFile, "%d\n%d\n",m_iVertNum, m_iFaceNum);
+	fprintf(t_pFile,"ply\nformat ascii 1.0\n"
+		"comment File created by Chai Yi's thesis project\n"
+		"element vertex %d\n"
+		"property float x\n"
+		"property float y\n"
+		"property float z\n"
+		"element face %d\n"
+		"property list uchar int vertex_indices\n"
+		"end_header\n",m_iVertNum, m_iFaceNum);
 
 	// 1.save vertex first
 	for (int i = 0; i<m_iVertNum; i++)
 	{
-		fprintf(t_pFile, "%d %f %f %f\n",m_pVert[i].index, m_pVert[i].point.x, m_pVert[i].point.y, m_pVert[i].point.z);
+		fprintf(t_pFile, "%f %f %f\n", m_pVert[i].point.x, m_pVert[i].point.y, m_pVert[i].point.z);
 	}
 
 	// 2.save faces
 	for (int i = 0; i<m_iFaceNum; i++)
 	{
-		fprintf(t_pFile, "%d %d %d\n", m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
+		fprintf(t_pFile, "3 %d %d %d\n", m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[2]);
 	}
 	fclose(t_pFile);
 	return true;
 }
 
 //////////////////////////////////////////////////////////////////////////////
-// LoopLODMeshLevel.cpp
+// RingLODMeshLevel.cpp
 
-LoopLODMeshLevel::LoopLODMeshLevel()
+RingLODMeshLevel::RingLODMeshLevel()
 {
 	maxLevel = 0;
 	next = NULL;
 	prev = NULL;
 }
 
-bool LoopLODMeshLevel::initLL(int t_iVertNum, LOD_VERTEX* pVert, int t_iFaceNum, LOD_FACE* pFace)
+bool RingLODMeshLevel::initLL(int t_iVertNum, LOD_VERTEX* pVert, int t_iFaceNum, LOD_FACE* pFace)
 {
 	m_iVertNum = t_iVertNum;
 	m_iFaceNum = t_iFaceNum;
@@ -531,7 +548,7 @@ bool LoopLODMeshLevel::initLL(int t_iVertNum, LOD_VERTEX* pVert, int t_iFaceNum,
 		return false;
 }
 
-bool LoopLODMeshLevel::init(int t_iVNum, int t_iFNum)
+bool RingLODMeshLevel::init(int t_iVNum, int t_iFNum)
 {
 	m_iVertNum = t_iVNum;
 	m_iFaceNum = t_iFNum;
@@ -545,11 +562,11 @@ bool LoopLODMeshLevel::init(int t_iVNum, int t_iFNum)
 		return false;
 }
 
-bool LoopLODMeshLevel::loopReverseSubdivide()
+bool RingLODMeshLevel::ringReverseSubdivide()
 {
 	char t_sErrFName[255];
 	FILE* t_pFile;
-	sprintf(t_sErrFName, "./generate/%s_loop-%d.err", m_sLODName, level);
+	sprintf(t_sErrFName, "./generate/%s_ring-%d.err", m_sLODName, level);
 	printf("reading file: %s\n",t_sErrFName);
 	t_pFile = fopen(t_sErrFName, "r");
 	if (t_pFile == nullptr)
@@ -563,22 +580,24 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 	// start load err information
 	fscanf(t_pFile, "%d", &m_iErrNum);	// error number
 
-	m_pError = (LoopLODError*) malloc(sizeof(LoopLODError) * m_iErrNum);
+	m_pError = (RingLODError*) malloc(sizeof(RingLODError) * m_iErrNum);
 
 	for (int i = 0; i<m_iErrNum; i++)
 	{
-		fscanf(t_pFile, "%d %f %f %f %d %d", &(m_pError[i].vertexIndex),
+		fscanf(t_pFile, "%d %f %f %f %d %d %d %d", &(m_pError[i].vertexIndex),
 			&(m_pError[i].errXYZ[0]), &(m_pError[i].errXYZ[1]),&(m_pError[i].errXYZ[2]),
-			&(m_pError[i].v1), &(m_pError[i].v2));
+			&(m_pError[i].v1), &(m_pError[i].v2),
+			&(m_pError[i].e1), &(m_pError[i].e2));
 	}
 	fclose(t_pFile);
+	
+	// step 000000000000
+	createHalfEdge();
 
-	next = new LoopLODMeshLevel();
+	// 111111111111111111
+	next = new RingLODMeshLevel();
 	next->level = level - 1;
 	strcpy(next->m_sLODName, m_sLODName);
-
-	// step 1111111111111
-	createHalfEdge();
 
 	int t_iNewVertNum = m_iVertNum + edgemap.size()/2;
 	int t_iNewFaceNum = m_iFaceNum * 4;
@@ -598,37 +617,45 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 	}
 	printf("Recovery: step 1 completed\n");
 
-
+	///////////////////
+	//   e1___f1___e2
+	//     \  /\  /
+	//    v1\/__\/v2
+	//      /\  /\
+	//   e3/__\/__\e4
+	//        f2
 	// step 22222222222222
-	int v1,v2,f1,f2,newVert[3];
-	float w = 1.0/8.0;				// subdivision coefficient
-	int count = 0;
+	int v1,v2,e1,e2,e3,e4,f1,f2,newVert[4];
+	float w = 1.0/16.0;				// subdivision coefficient
 	for (int i = 0; i< m_iFaceNum; i++)
 	{
 		for (int j = 0; j< 3; j++)
 		{
-			//        f1
-			//        /\  
-			//    v1 /__\ v2
-			//       \  /
-			//   　　 \/   
-			//        f2
 			newVert[j] = findIndex(m_pFace[i].vertIndex[j], m_pFace[i].vertIndex[(j+1)%3],va,vb, t_iCurVert-m_iVertNum);
 			if(newVert[j] == -1)	// not find means the new vertex has not been created
 			{
 				v1 = m_pFace[i].vertIndex[j];
 				v2 = m_pFace[i].vertIndex[(j+1)%3];
-				f1 = m_pFace[i].vertIndex[(j+2)%3];
+
+				f1 = hf_findThirdVert(v1,v2);
 				f2 = hf_findThirdVert(v2,v1);
+
+				e1 = hf_findThirdVert(v1,f1);
+				e2 = hf_findThirdVert(f1,v2);
+				e3 = hf_findThirdVert(v2,f2);
+				e4 = hf_findThirdVert(f2,v1);
 
 				// new vert position
 				next->m_pVert[t_iCurVert].index = t_iCurVert;
-				next->m_pVert[t_iCurVert].point.x = 3*w*(m_pVert[v1].point.x + m_pVert[v2].point.x )
-					+  w * ( m_pVert[f1].point.x + m_pVert[f2].point.x );
-				next->m_pVert[t_iCurVert].point.y = 3*w*(m_pVert[v1].point.y + m_pVert[v2].point.y )
-					+  w * ( m_pVert[f1].point.y + m_pVert[f2].point.y );
-				next->m_pVert[t_iCurVert].point.z = 3*w*(m_pVert[v1].point.z + m_pVert[v2].point.z )
-					+  w * ( m_pVert[f1].point.z + m_pVert[f2].point.z );
+				next->m_pVert[t_iCurVert].point.x = 8*w* (m_pVert[v1].point.x + m_pVert[v2].point.x)
+					+ 2*w* (m_pVert[f1].point.x + m_pVert[f2].point.x)
+					- w* (m_pVert[e1].point.x + m_pVert[e2].point.x + m_pVert[e3].point.x + m_pVert[e4].point.x);
+				next->m_pVert[t_iCurVert].point.y = 8*w* (m_pVert[v1].point.y + m_pVert[v2].point.y)
+					+ 2*w* (m_pVert[f1].point.y + m_pVert[f2].point.y)
+					- w* (m_pVert[e1].point.y + m_pVert[e2].point.y + m_pVert[e3].point.y + m_pVert[e4].point.y);
+				next->m_pVert[t_iCurVert].point.z = 8*w* (m_pVert[v1].point.z + m_pVert[v2].point.z)
+					+ 2*w* (m_pVert[f1].point.z + m_pVert[f2].point.z)
+					- w* (m_pVert[e1].point.z + m_pVert[e2].point.z + m_pVert[e3].point.z + m_pVert[e4].point.z);
 				next->m_pVert[t_iCurVert].valence = 0;
 				next->m_pVert[t_iCurVert].normal.x = next->m_pVert[t_iCurVert].normal.y 
 					= next->m_pVert[t_iCurVert].normal.z
@@ -641,7 +668,6 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 					next->m_pVert[t_iCurVert].point.x += t_fErr[0];
 					next->m_pVert[t_iCurVert].point.y += t_fErr[1];
 					next->m_pVert[t_iCurVert].point.z += t_fErr[2];
-					count++;
 				}
 
 				// mark subdivided edge
@@ -697,7 +723,6 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 			= next->m_pFace[i*4+3].normal.z
 			= 0;
 	}
-	printf("count= %d\n",count);
 	printf("Recovery: step 2 completed\n");
 
 	
@@ -717,7 +742,7 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 	return true;
 }
 
-bool LoopLODMeshLevel::findErrVert(int a, int b, float* err)
+bool RingLODMeshLevel::findErrVert(int a, int b, float* err)
 {
 	for (int i = 0; i<m_iErrNum; i++)
 	{
@@ -733,11 +758,11 @@ bool LoopLODMeshLevel::findErrVert(int a, int b, float* err)
 	return false;
 }
 
-bool LoopLODMeshLevel::saveLevelToFile(LoopLODMeshLevel* nextLevel)
+bool RingLODMeshLevel::saveLevelToFile(RingLODMeshLevel* nextLevel)
 {
 	FILE* t_pFile;
 	char t_sFName[255];
-	sprintf(t_sFName, "./generate/%s_loop_lod-%d.ply", nextLevel->m_sLODName, nextLevel->level);
+	sprintf(t_sFName, "./generate/%s_ring_lod-%d.ply", nextLevel->m_sLODName, nextLevel->level);
 
 	t_pFile = fopen(t_sFName, "w");
 	if (t_pFile == nullptr)
@@ -768,4 +793,3 @@ bool LoopLODMeshLevel::saveLevelToFile(LoopLODMeshLevel* nextLevel)
 	fclose(t_pFile);
 	return true;
 }
-

@@ -29,24 +29,24 @@ public:
 	void computeValence();
 	void sortAdjVert();
 
-	virtual bool saveToPly(){return true;}	// save current subdivision
+	virtual bool saveToPly() = 0;	// save current subdivision
 	//////////////////////////////////////////////////////////////////////
 
 	int m_iMaxLevel;		// subdivision level
-	virtual void subdivision(){}
+	virtual void subdivision() = 0;
 
-	virtual void buildAllLevels(){}
+	virtual void buildAllLevels() = 0;
 	void nextLevel();
 	void prevLevel();
 
-	virtual	bool recoverAllLevels(){ return false;}
+	virtual	bool recoverAllLevels() = 0;
 
 	int			mSubLevel;		// number 1,2,3,4
 	int			maxLevel;		// reverse subdivision level
 
 	//////////////////////////////////////////////////////////////////////
 
-	virtual void render(){}			// render stuff
+	virtual void render() = 0;
 	void renderSubdivision();
 
 	void setWired();

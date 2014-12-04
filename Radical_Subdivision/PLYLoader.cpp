@@ -142,7 +142,7 @@ void PLYLoader::centralize()
 	float midY = (maxY + minY)/2;
 	float midZ = (maxZ + minZ)/2;
 
-	float scaleCoef = 30./(maxX - minX + maxY - minY + maxZ - minZ);
+	float scaleCoef = 300./(maxX - minX + maxY - minY + maxZ - minZ);
 
 	for (i = 0; i<ply->vertex_num; i++)
 	{

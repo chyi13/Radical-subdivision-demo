@@ -111,6 +111,7 @@ bool RadicalLODLevel::buildNextLevel()
 		next = new RadicalLODLevel();
 		next->level = level+1;				// level ++
 		next->init(evenNum, m_iFaceNum/3, m_iVertNum - evenNum);		// face num = current faceNum/3
+		next->threshold = threshold;
 		strcpy(next->m_sLODName, m_sLODName);
 
 		for (int i = 0,j = 0; i<m_iVertNum; i++)			// save current even vertex
@@ -228,6 +229,7 @@ bool RadicalLODLevel::predict(RadicalLODLevel* nextLOD)
 			errorIndex++;
 		}
 	}
+	nextLOD->m_iErrNum = errorIndex;
 	return true;
 }
 
@@ -250,13 +252,16 @@ bool RadicalLODLevel::saveErrorToFile(RadicalLODLevel* nextLOD)
 
 	for (int i =0; i<nextLOD->m_iErrNum; i++)
 	{
-		if (nextLOD->m_pError[i].errXYZ[0] > threshold
-			|| nextLOD->m_pError[i].errXYZ[1] > threshold
-			|| nextLOD->m_pError[i].errXYZ[2] > threshold)
+		if (abs(nextLOD->m_pError[i].errXYZ[0]) > threshold
+			|| abs(nextLOD->m_pError[i].errXYZ[1]) > threshold
+			|| abs(nextLOD->m_pError[i].errXYZ[2]) > threshold)
 		{
-			fprintf(t_pFile,"%d %f %f %f %d %d %d\n",nextLOD->m_pError[i].vertexIndex,
-			nextLOD->m_pError[i].errXYZ[0],nextLOD->m_pError[i].errXYZ[1],nextLOD->m_pError[i].errXYZ[2],
-			nextLOD->m_pError[i].faceVertex[0],nextLOD->m_pError[i].faceVertex[1],nextLOD->m_pError[i].faceVertex[2]);
+			fprintf(t_pFile,"%f %f %f %d %d %d\n", nextLOD->m_pError[i].errXYZ[0],
+				nextLOD->m_pError[i].errXYZ[1],
+				nextLOD->m_pError[i].errXYZ[2],
+				nextLOD->m_pError[i].faceVertex[0],
+				nextLOD->m_pError[i].faceVertex[1],
+				nextLOD->m_pError[i].faceVertex[2]);
 		}
 	}
 	fclose(t_pFile);
@@ -268,7 +273,6 @@ bool RadicalLODLevel::saveCurrentMesh()
 	FILE* t_pFile;
 	char t_sFileN[255];
 	sprintf(t_sFileN, "./generate/%s_radical.cor", m_sLODName);
-	printf("shit%s\n",t_sFileN);
 	t_pFile = fopen(t_sFileN, "w");
 
 	// 0. vert num, face num
@@ -289,8 +293,53 @@ bool RadicalLODLevel::saveCurrentMesh()
 	return true;
 }
 
-
 bool RadicalLODLevel::updateLOD(RadicalLODLevel* nextLOD)
+{
+	std::map<int, int> tempMap;
+	std::map<int, int>::iterator it;
+	int tempIndex = 0;
+
+	for (int i = 0; i< m_iVertNum; i++)
+	{
+		if (m_pVert[i].even == EVEN)
+		{
+			tempMap.insert(std::pair<int,int>(i, tempIndex));
+			nextLOD->m_pVert[tempIndex].point = m_pVert[i].point;
+			nextLOD->m_pVert[tempIndex].even = UNKNOWN;
+			nextLOD->m_pVert[tempIndex].index = tempIndex;
+
+			tempIndex++;
+		}
+	}
+	int tempFace = 0;
+	for (int i = 0; i< nextLOD->m_iErrNum; i++)
+	{
+		nextLOD->m_pFace[tempFace].faceVertexID = tempFace;
+		it = tempMap.find(nextLOD->m_pError[i].faceVertex[0]);
+		nextLOD->m_pFace[tempFace].vertIndex[0] = it->second; 
+		it = tempMap.find(nextLOD->m_pError[i].faceVertex[1]);
+		nextLOD->m_pFace[tempFace].vertIndex[1] = it->second; 
+		it = tempMap.find(nextLOD->m_pError[i].faceVertex[2]);
+		nextLOD->m_pFace[tempFace].vertIndex[2] = it->second; 
+		
+		tempFace++;
+
+		if (tempFace >= nextLOD->m_iFaceNum)
+			break;
+	}
+
+	for (int i= 0; i<next->m_iErrNum; i++)
+	{
+		for (int j= 0; j<3; j++)
+		{
+			nextLOD->m_pError[i].faceVertex[j] = tempMap.find(nextLOD->m_pError[i].faceVertex[j])->second;
+		}
+	}
+
+	return true;
+}
+
+bool RadicalLODLevel::updateLOD1(RadicalLODLevel* nextLOD)
 {
 	std::map<int,int> tempMap;			// <original id, current id>
 	std::map<int,int>::iterator it;
@@ -321,13 +370,13 @@ bool RadicalLODLevel::updateLOD(RadicalLODLevel* nextLOD)
 		}
 	}
 	// update error vertex index(index from previous level to next lod level)
-	for (int i= 0; i<next->m_iErrNum; i++)
-	{
-		for (int j= 0; j<3; j++)
-		{
-			nextLOD->m_pError[i].faceVertex[j] = tempMap.find(nextLOD->m_pError[i].faceVertex[j])->second;
-		}
-	}
+	//for (int i= 0; i<next->m_iErrNum; i++)
+	//{
+	//	for (int j= 0; j<3; j++)
+	//	{
+	//		nextLOD->m_pError[i].faceVertex[j] = tempMap.find(nextLOD->m_pError[i].faceVertex[j])->second;
+	//	}
+	//}
 	return true;
 }
 
@@ -612,7 +661,7 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 
 	for (int i = 0; i<m_iErrNum; i++)
 	{
-		fscanf(t_pFile, "%d %f %f %f %d %d %d", &(m_pError[i].vertexIndex),
+		fscanf(t_pFile, "%f %f %f %d %d %d",
 			&(m_pError[i].errXYZ[0]), &(m_pError[i].errXYZ[1]),&(m_pError[i].errXYZ[2]),
 			&(m_pError[i].faceVertex[0]), &(m_pError[i].faceVertex[1]), &(m_pError[i].faceVertex[2]));
 	}
@@ -640,6 +689,7 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 	// step 22222222222222
 	// update every face
 	// (1)add a face vertex 
+	int count = 0;
 	for (int i = 0; i<m_iFaceNum; i++)
 	{
 
@@ -665,6 +715,7 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 
 		if (findErrVert(a, b, c, t_fErr))		// check if we have saved the error difference
 		{
+			count++;
 			next->m_pVert[t_iCurVert].point.x += t_fErr[0];
 			next->m_pVert[t_iCurVert].point.y += t_fErr[1];
 			next->m_pVert[t_iCurVert].point.z += t_fErr[2];
@@ -673,7 +724,7 @@ bool RadicalLODMeshLevel::radicalReverseSubdivide()
 		t_iCurVert++;
 	}
 	printf("Recovery: step 2 completed\n");
-
+	printf("count= %d\n",count);
 	// step 333333333333
 	// create half edge
 	createHalfEdge();
