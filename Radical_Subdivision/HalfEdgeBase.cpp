@@ -100,6 +100,21 @@ void HalfEdgeBase::createHalfEdge()
 		iter1->second->sym = iter2->second;
 	}
 }
+
+int HalfEdgeBase::findThirdVert(int ia, int ib)
+{
+	for (int i = 0; i<m_iFaceNum; i++)
+	{
+		if ((m_pFace[i].vertIndex[0] == ia) && (m_pFace[i].vertIndex[1] == ib))
+			return m_pFace[i].vertIndex[2];
+		if ((m_pFace[i].vertIndex[1] == ia) && (m_pFace[i].vertIndex[2] == ib))
+			return m_pFace[i].vertIndex[0];
+		if ((m_pFace[i].vertIndex[2] == ia) && (m_pFace[i].vertIndex[0] == ib))
+			return m_pFace[i].vertIndex[1];
+	}
+	return -1;
+}
+
 int HalfEdgeBase::hf_findPairVert(int ia,int ib)
 {
 	Pair hfpair(ia,ib);

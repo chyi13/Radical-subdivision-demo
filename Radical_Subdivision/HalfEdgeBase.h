@@ -31,6 +31,8 @@ public:
 	void createHalfEdge();
 
 	// 
+	int findThirdVert(int ia, int ib);
+
 	int hf_findPairVert(int ia,int ib);		// 另外一面的面点
 	int hf_findFaceVert(int ia,int ib);
 	int hf_findThirdVert(int ia,int ib);	// ia ib 之外的第三个顶点

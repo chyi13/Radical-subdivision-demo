@@ -40,7 +40,7 @@ void RingLOD::subdivision()
 	}
 
 	// step 1212121212121212
-	createHalfEdge();
+//	createHalfEdge();
 
 	// step 222222222222222
 	// add face vertex to every face
@@ -63,7 +63,7 @@ void RingLOD::subdivision()
 				v1 = m_pFace[iCurFace].vertIndex[i];
 				v2 = m_pFace[iCurFace].vertIndex[(i+1)%3];
 				f1 = m_pFace[iCurFace].vertIndex[(i+2)%3];
-				f2 = hf_findThirdVert(v2,v1);
+				f2 = findThirdVert(v2,v1);
 
 				// new vert position
 				pNewVert[iCurVert].index = iCurVert;
@@ -304,13 +304,13 @@ void RingLOD::subdivision2()
 				v1 = m_pFace[i].vertIndex[j];
 				v2 = m_pFace[i].vertIndex[(j+1)%3];
 
-				f1 = hf_findThirdVert(v1,v2);
-				f2 = hf_findThirdVert(v2,v1);
+				f1 = findThirdVert(v1,v2);
+				f2 = findThirdVert(v2,v1);
 
-				e1 = hf_findThirdVert(v1,f1);
-				e2 = hf_findThirdVert(f1,v2);
-				e3 = hf_findThirdVert(v2,f2);
-				e4 = hf_findThirdVert(f2,v1);
+				e1 = findThirdVert(v1,f1);
+				e2 = findThirdVert(f1,v2);
+				e3 = findThirdVert(v2,f2);
+				e4 = findThirdVert(f2,v1);
 
 				t_pNewVert[iCurVert].index = iCurVert;
 				t_pNewVert[iCurVert].point.x = 8*w* (m_pVert[v1].point.x + m_pVert[v2].point.x)
@@ -501,7 +501,7 @@ void RingLOD::subdivision1()
 	}
 
 	// step 1212121212121212
-	createHalfEdge();
+//	createHalfEdge();
 
 	//
 	int v1, v2, a, b ,c, o, newVert[3];
@@ -713,7 +713,8 @@ void RingLOD::render()
 		// display predict error
 		if (subLevel == 2 && plod->next)
 		{
-			glColor3f(1.0f,0.0f,1.0f);
+			glLineWidth(2.0f);
+			glColor3f(1.0f,1.0f,1.0f);
 			for (int i =0; i<plod->next->m_iErrNum; i++)
 			{
 				glBegin(GL_LINES);
@@ -728,6 +729,7 @@ void RingLOD::render()
 
 				glEnd();
 			}
+			glLineWidth(1.0f);
 		}
 
 		// next lod

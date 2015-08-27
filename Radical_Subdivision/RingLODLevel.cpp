@@ -104,7 +104,7 @@ bool RingLODLevel::buildNextLevel()
 {
 	// 00000000000000000000000000
 	printf("\r\n------------------building level %d-------------------\n",level+1);
-	createHalfEdge();
+//	createHalfEdge();
 
 	clock_t start,finish;
 	start = clock();
@@ -233,8 +233,8 @@ bool RingLODLevel::setEven(int index)
 
 			m_pVert[o].even = ODD;
 
-			oo = hf_findThirdVert(oo, o);
-			oo = hf_findThirdVert(oo, o);
+			oo = findThirdVert(oo, o);
+			oo = findThirdVert(oo, o);
 
 			if (oo == -1)
 			{
@@ -360,34 +360,34 @@ bool RingLODLevel::findRingVert(int o,int e[])
 
 	// vert 2
 	int t[12];
-	t[0] = hf_findThirdVert(e[0], o);
-	t[1] = hf_findThirdVert(o, e[1]);
-	e[2] = hf_findThirdVert(t[0], t[1]);
+	t[0] = findThirdVert(e[0], o);
+	t[1] = findThirdVert(o, e[1]);
+	e[2] = findThirdVert(t[0], t[1]);
 
 	// vert 3
-	t[2] = hf_findThirdVert(o, e[0]);
-	t[3] = hf_findThirdVert(e[1], o);
-	e[3] = hf_findThirdVert(t[3], t[2]);
+	t[2] = findThirdVert(o, e[0]);
+	t[3] = findThirdVert(e[1], o);
+	e[3] = findThirdVert(t[3], t[2]);
 
 	// vert 4
-	t[4] = hf_findThirdVert(e[0], t[0]);
-	t[5] = hf_findThirdVert(t[0], e[2]);
-	e[4] = hf_findThirdVert(t[4], t[5]);
+	t[4] = findThirdVert(e[0], t[0]);
+	t[5] = findThirdVert(t[0], e[2]);
+	e[4] = findThirdVert(t[4], t[5]);
 
 	// vert 5
-	t[6] = hf_findThirdVert(e[2], t[1]);
-	t[7] = hf_findThirdVert(t[1], e[1]);
-	e[5] = hf_findThirdVert(t[6], t[7]);
+	t[6] = findThirdVert(e[2], t[1]);
+	t[7] = findThirdVert(t[1], e[1]);
+	e[5] = findThirdVert(t[6], t[7]);
 
 	// vert 6
-	t[8] = hf_findThirdVert(e[3], t[2]);
-	t[9] = hf_findThirdVert(t[2], e[0]);
-	e[6] = hf_findThirdVert(t[8], t[9]);
+	t[8] = findThirdVert(e[3], t[2]);
+	t[9] = findThirdVert(t[2], e[0]);
+	e[6] = findThirdVert(t[8], t[9]);
 
 	// vert 7
-	t[10] = hf_findThirdVert(e[1], t[3]);
-	t[11] = hf_findThirdVert(t[3], e[3]);
-	e[7] = hf_findThirdVert(t[10], t[11]);
+	t[10] = findThirdVert(e[1], t[3]);
+	t[11] = findThirdVert(t[3], e[3]);
+	e[7] = findThirdVert(t[10], t[11]);
 
 	return true;
 }
@@ -423,9 +423,9 @@ bool RingLODLevel::updateLOD(RingLODLevel* nextLOD)
 			|| m_pVert[m_pFace[i].vertIndex[2]].even == EVEN)
 			continue;
 
-		na = hf_findThirdVert(m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[2]);
-		nb = hf_findThirdVert(m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[0]);
-		nc = hf_findThirdVert(m_pFace[i].vertIndex[2], m_pFace[i].vertIndex[1]);
+		na = findThirdVert(m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[2]);
+		nb = findThirdVert(m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[0]);
+		nc = findThirdVert(m_pFace[i].vertIndex[2], m_pFace[i].vertIndex[1]);
 
 		// find the index in current index
 		it = tempMap.find(na);
@@ -592,7 +592,7 @@ bool RingLODMeshLevel::ringReverseSubdivide()
 	fclose(t_pFile);
 	
 	// step 000000000000
-	createHalfEdge();
+//	createHalfEdge();
 
 	// 111111111111111111
 	next = new RingLODMeshLevel();
@@ -637,13 +637,13 @@ bool RingLODMeshLevel::ringReverseSubdivide()
 				v1 = m_pFace[i].vertIndex[j];
 				v2 = m_pFace[i].vertIndex[(j+1)%3];
 
-				f1 = hf_findThirdVert(v1,v2);
-				f2 = hf_findThirdVert(v2,v1);
+				f1 = findThirdVert(v1,v2);
+				f2 = findThirdVert(v2,v1);
 
-				e1 = hf_findThirdVert(v1,f1);
-				e2 = hf_findThirdVert(f1,v2);
-				e3 = hf_findThirdVert(v2,f2);
-				e4 = hf_findThirdVert(f2,v1);
+				e1 = findThirdVert(v1,f1);
+				e2 = findThirdVert(f1,v2);
+				e3 = findThirdVert(v2,f2);
+				e4 = findThirdVert(f2,v1);
 
 				// new vert position
 				next->m_pVert[t_iCurVert].index = t_iCurVert;

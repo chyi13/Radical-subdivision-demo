@@ -65,7 +65,8 @@ void RadicalLOD::render()
 		// display predict error
 		if (subLevel == 2 && plod->next)
 		{
-			glColor3f(1.0f,0.0f,1.0f);
+			glColor3f(1.0f,1.0f,1.0f);
+			glLineWidth(2.f);
 			for (int i =0; i<plod->next->m_iErrNum; i++)
 			{
 				glBegin(GL_LINES);
@@ -80,6 +81,7 @@ void RadicalLOD::render()
 
 				glEnd();
 			}
+			glLineWidth(1.f);
 		}
 
 		// next lod

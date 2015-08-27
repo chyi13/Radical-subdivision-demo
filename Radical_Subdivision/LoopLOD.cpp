@@ -41,7 +41,7 @@ void LoopLOD::subdivision()
 	}
 
 	// step 1212121212121212
-	createHalfEdge();
+//	createHalfEdge();
 
 	// step 222222222222222
 	// add face vertex to every face
@@ -64,7 +64,7 @@ void LoopLOD::subdivision()
 				v1 = m_pFace[iCurFace].vertIndex[i];
 				v2 = m_pFace[iCurFace].vertIndex[(i+1)%3];
 				f1 = m_pFace[iCurFace].vertIndex[(i+2)%3];
-				f2 = hf_findThirdVert(v2,v1);
+			//	f2 = hf_findThirdVert(v2,v1);
 
 				// new vert position
 				pNewVert[iCurVert].index = iCurVert;
@@ -359,7 +359,8 @@ void LoopLOD::render()
 		// display predict error
 		if (subLevel == 2 && plod->next)
 		{
-			glColor3f(1.0f,0.0f,1.0f);
+			glColor3f(1.0f,1.0f,1.0f);
+			glLineWidth(2.0f);
 			for (int i =0; i<plod->next->m_iErrNum; i++)
 			{
 				glBegin(GL_LINES);
@@ -374,6 +375,7 @@ void LoopLOD::render()
 
 				glEnd();
 			}
+			glLineWidth(1.0f);
 		}
 
 		// next lod

@@ -9,7 +9,8 @@ float scale_v[3] ={1.0f,1.0f,1.0f};
 
 void initGL()
 {
-	glClearColor(0.75f,0.75f,0.75f,1.f);
+//	glClearColor(0.75f,0.75f,0.75f,1.f);
+	glClearColor(0.0f,0.0f,0.0f,1.f);
 	glShadeModel(GL_SMOOTH);
 	glClearDepth(1.0f);
 

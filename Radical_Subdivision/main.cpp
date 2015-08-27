@@ -8,9 +8,9 @@ void init()
 {
 	initGL();
 
-	g_LOD = new RingLOD();
+	g_LOD = new RadicalLOD();
 
-	if (!g_LOD->loadFromFile("head.ply"))//"bun_zipper_res2.ase"))
+	if (!g_LOD->loadFromFile("venus_radical.ply"))//"bun_zipper_res2.ase"))
 	{
 		printf("File not found!\n");
 		return;

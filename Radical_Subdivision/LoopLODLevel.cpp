@@ -105,7 +105,7 @@ bool LoopLODLevel::buildNextLevel()
 {
 	// 00000000000000000000000000
 	printf("\r\n------------------building level %d-------------------\n",level+1);
-	createHalfEdge();
+//	createHalfEdge();
 
 	clock_t start,finish;
 	start = clock();
@@ -252,8 +252,8 @@ bool LoopLODLevel::setEven(int index)
 
 			m_pVert[o].even = ODD;
 
-			oo = hf_findThirdVert(oo, o);
-			oo = hf_findThirdVert(oo, o);
+			oo = findThirdVert(oo, o);
+			oo = findThirdVert(oo, o);
 
 			if (oo == -1)
 			{
@@ -371,14 +371,14 @@ bool LoopLODLevel::findLoopVert(int o,int e[])
 	}
 
 	//e[2]:
-	t[0] = hf_findThirdVert(e[0],o);
-	t[1] = hf_findThirdVert(o,e[1]);
-	e[2] = hf_findThirdVert(t[0],t[1]);
+	t[0] = findThirdVert(e[0],o);
+	t[1] = findThirdVert(o,e[1]);
+	e[2] = findThirdVert(t[0],t[1]);
 
 	//e[3]:
-	t[3] = hf_findThirdVert(e[1],o);
-	t[2] = hf_findThirdVert(o,e[0]);
-	e[3] = hf_findThirdVert(t[3],t[2]);
+	t[3] = findThirdVert(e[1],o);
+	t[2] = findThirdVert(o,e[0]);
+	e[3] = findThirdVert(t[3],t[2]);
 
 	return true;
 }
@@ -415,9 +415,9 @@ bool LoopLODLevel::updateLOD(LoopLODLevel* nextLOD)
 			|| m_pVert[m_pFace[i].vertIndex[2]].even == EVEN)
 			continue;
 
-		na = hf_findThirdVert(m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[2]);
-		nb = hf_findThirdVert(m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[0]);
-		nc = hf_findThirdVert(m_pFace[i].vertIndex[2], m_pFace[i].vertIndex[1]);
+		na = findThirdVert(m_pFace[i].vertIndex[0], m_pFace[i].vertIndex[2]);
+		nb = findThirdVert(m_pFace[i].vertIndex[1], m_pFace[i].vertIndex[0]);
+		nc = findThirdVert(m_pFace[i].vertIndex[2], m_pFace[i].vertIndex[1]);
 
 		// find the index in current index
 		it = tempMap.find(na);
@@ -578,7 +578,7 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 	strcpy(next->m_sLODName, m_sLODName);
 
 	// step 1111111111111
-	createHalfEdge();
+//	createHalfEdge();
 
 	int t_iNewVertNum = m_iVertNum + edgemap.size()/2;
 	int t_iNewFaceNum = m_iFaceNum * 4;
@@ -619,7 +619,7 @@ bool LoopLODMeshLevel::loopReverseSubdivide()
 				v1 = m_pFace[i].vertIndex[j];
 				v2 = m_pFace[i].vertIndex[(j+1)%3];
 				f1 = m_pFace[i].vertIndex[(j+2)%3];
-				f2 = hf_findThirdVert(v2,v1);
+				f2 = findThirdVert(v2,v1);
 
 				// new vert position
 				next->m_pVert[t_iCurVert].index = t_iCurVert;
