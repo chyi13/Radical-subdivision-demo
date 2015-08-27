@@ -13,17 +13,17 @@ is diplayed as well.
   
 ===================================
 Screenshots
-1.
-  1.1Before building progressive mesh
-![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/5.jpg "Optional title")
-  1.2After building
-![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/4.jpg "Optional title")
-2. Building process
-  2.1 split
+# Demo results
+  * Before building progressive mesh
+  ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/5.jpg "Optional title")
+  * After building
+  ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/4.jpg "Optional title")
+# Building process
+  * split
   ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/7.jpg "split")
-  2.2 predict
+  * predict
   ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/2.jpg "split")
-  2.3 update
+  * update
   ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/3.jpg "split")
-3. Building result
+# Building result
   ![Alt text](https://github.com/chyi13/Radical-subdivision-demo/blob/master/screenshots/6.jpg "split")
